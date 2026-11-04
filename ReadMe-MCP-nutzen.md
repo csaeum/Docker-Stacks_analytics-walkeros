@@ -10,9 +10,9 @@ Dev-Instanz experimentierst und Fehler mit dem MCP und Claude Code findest.
 Dein PC                               Server
 ─────────────────────────             ──────────────────────────────────────
 Claude Code                           Traefik
- ├─ MCP walkeros-flow                  ├─ collect.deine-domain.de
+ ├─ MCP walkeros-flow                  ├─ fury.projektleder.de usw.
  │   prüft und simuliert flow.json     │    └─ walkeros-walkerOS      (main)
- │                                     └─ collect-dev.deine-domain.de
+ │                                     └─ fury-dev.deine-domain.de 
  └─ ssh ── liest Container-Logs ───►        └─ walkeros-dev-walkerOS  (Branch)
 ```
 
@@ -34,7 +34,7 @@ Den laufenden Collector kann er weder auslesen noch ändern. Die Fehlersuche fun
 | Fertiges Paket, z. B. `@walkeros/server-destination-api` | Sendet nichts und zeigt mit `verbose: true` die Daten, die es senden würde |
 | Eigene `push`-Funktion mit `fetch` | **Sendet wirklich** und meldet trotzdem `0/1 destinations received` |
 
-Eigene `push`-Funktionen, wie sie für Matomo und GA4 geplant sind, müssen ihr Ziel deshalb immer aus
+Eigene `push`-Funktionen müssen ihr Ziel deshalb immer aus
 einer Umgebungsvariable lesen und ohne diese Variable abbrechen:
 
 ```json
@@ -90,16 +90,19 @@ Die Produktion läuft immer auf dem Stand von `main`.
 1. Die echten Website-Domains in der `flow.json` unter `cors.origin` eintragen und über einen Pull Request
    nach `main` bringen. Domains sind nicht geheim. Lokale Änderungen auf dem Server würden dagegen bei
    `git pull` Konflikte erzeugen.
-2. Repo auf dem Server klonen:
+2. Repo auf dem Server klonen. Es ist öffentlich und braucht keinen Zugang:
    ```bash
+   cd /home/dockeradmin/docker-stacks
    git clone https://git.web-seo-consulting.eu/Docker-Stacks/analytics-walkeros.git
    cd analytics-walkeros
    ```
 3. Datei `.env.local` anlegen. Sie liegt nicht im Git und überschreibt die Platzhalter aus `.env`:
    ```dotenv
-   HOSTRULE=Host(`collect.deine-domain.de`)
-   ALLOWED_ORIGIN_REGEX='^https://www\.deine-domain\.de$'
+   HOSTRULE=Host(`fury.projektleder.de`) || Host(`fury.projektleder.at`) || Host(`fury.projektleder.ch`) || Host(`fury.web-seo-consulting.eu`)
+   ALLOWED_ORIGIN_REGEX='^https://(projektleder\.(de|at|ch)|web-seo-consulting\.eu|lichte-kraft\.eu)$'
    ```
+   Alle Hosts einer Regel teilen sich ein Zertifikat. Nimm deshalb nur Hosts auf, deren DNS schon auf den
+   Server zeigt, sonst scheitert die Ausstellung für alle.
 4. Stack starten. Diesen Befehl nutzt du auch für jedes spätere Update:
    ```bash
    docker compose --env-file .env --env-file .env.local up -d --build
@@ -109,8 +112,8 @@ Die Produktion läuft immer auf dem Stand von `main`.
 
 ```bash
 docker inspect --format '{{.State.Health.Status}}' walkeros-walkerOS   # muss "healthy" sein
-curl -X POST https://collect.deine-domain.de/collect \
-  -H 'Origin: https://www.deine-domain.de' \
+curl -X POST https://fury.projektleder.de/collect \
+  -H 'Origin: https://projektleder.de' \
   -H 'Content-Type: application/json' \
   -d '{"name":"page view","data":{"title":"Test"}}'                    # {"success":true,...}
 ```
@@ -163,8 +166,7 @@ docker compose --env-file .env --env-file .env.dev.local down
 
 **Regeln für Dev:**
 
-- Nur Test-Ziele verwenden: eigene GA4-Test-Property, eigene Matomo-Site und die Testmodi von Meta und
-  Pinterest. Sonst verfälscht Dev deine echten Zahlen.
+- Nur Test-Ziele verwenden: eigene Matomo-Site und die Testmodi von Meta und Pinterest. Sonst verfälscht Dev deine echten Zahlen.
 - Für Tests im Browser muss die Dev-Domain auch in der `flow.json` des Branches unter `cors.origin` stehen.
   `curl`-Tests funktionieren auch ohne diesen Eintrag. Diese Änderung gehört nicht nach `main`.
 - Für mehr Details `"logger": { "level": "DEBUG" }` unter `collector` in der `flow.json` des Branches setzen.

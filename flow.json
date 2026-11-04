@@ -18,7 +18,15 @@
           "config": {
             "settings": {
               "paths": ["/collect"],
-              "cors": { "origin": ["https://www.example.com"] }
+              "cors": {
+                "origin": [
+                  "https://projektleder.de",
+                  "https://projektleder.at",
+                  "https://projektleder.ch",
+                  "https://web-seo-consulting.eu",
+                  "https://lichte-kraft.eu"
+                ]
+              }
             }
           }
         }

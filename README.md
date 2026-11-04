@@ -2,7 +2,8 @@
 # walkerOS Stack
 
 Selbst gehosteter [walkerOS](https://www.walkeros.io/docs/)-Collector als Docker-Stack hinter
-Traefik. Er soll nach einer Bewährungsphase den Stack `analytics-gtm-sstm-projekt` ablösen.
+Traefik. Er ist für Matomo, Meta und Pinterest vorgesehen. GA4 und Google Ads bleiben im Stack
+`analytics-gtm-sstm-projekt`.
 
 > **Stand:** Im Aufbau. Der Collector läuft, gibt Events aber nur ins Container-Log aus. Echte
 > Tracking-Ziele sind noch nicht angebunden.
@@ -23,13 +24,13 @@ Traefik. Er soll nach einer Bewährungsphase den Stack `analytics-gtm-sstm-proje
 
 ## Einrichtung
 
-1. In `.env` die Host-Regel `HOSTRULE` auf die Collector-Domain setzen.
-2. Die eigenen Website-Domains an zwei Stellen eintragen: `ALLOWED_ORIGIN_REGEX` in `.env` und
+1. In `.env.local` die Host-Regel `HOSTRULE` auf die Collector-Domains setzen, mehrere per `||` trennen.
+2. Die eigenen Website-Domains an zwei Stellen eintragen: `ALLOWED_ORIGIN_REGEX` in `.env.local` und
    `cors.origin` in `flow.json`.
 3. Stack bauen und starten:
 
 ```bash
-docker compose up -d --build
+docker compose --env-file .env --env-file .env.local up -d --build
 ```
 
 Nach jeder Änderung an `flow.json` muss das Image neu gebaut werden, weil die Flow-Konfiguration
@@ -42,14 +43,13 @@ Paketversionen in `flow.json` gemeinsam anpassen.
 # Container-Status, muss "healthy" sein
 docker inspect --format '{{.State.Health.Status}}' walkeros-walkerOS
 
-# Domains durch die echten ersetzen
-curl -X POST https://collect.example.com/collect \
-  -H 'Origin: https://www.example.com' \
+curl -X POST https://fury.projektleder.de/collect \
+  -H 'Origin: https://projektleder.de' \
   -H 'Content-Type: application/json' \
   -d '{"name":"page view","data":{"title":"Home"}}'
 
 # Das Event erscheint im Log
-docker compose logs -f walkeros
+docker compose --env-file .env --env-file .env.local logs -f walkeros
 ```
 
 `/collect` antwortet mit `{"success":true,...}`.

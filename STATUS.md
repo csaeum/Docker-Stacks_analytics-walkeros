@@ -5,16 +5,13 @@
 
 **Aktives Issue:** keines in Arbeit; #1 (Käufe serverseitig mit Token) ist angelegt und folgt später
 **Erledigt diese Sitzung:** Grundgerüst, Stack, Origin-Schutz, CI und lokaler MCP angelegt. Die CI-Gegenprobe auf dem Forgejo-Runner ist bestanden: Secret, `USER root`, falsche Paketversion und `privileged: true` wurden erkannt.
-**Nächster Schritt:** Branch `feature/multi-domain`: Collector-Domains `fury.projektleder.de`, `.at`, `.ch`, `fury.web-seo-consulting.eu` und `fury.lichte-kraft.eu` eintragen, Host-Regel in Klammern lokal testen und `Projekt.md` an die neue Aufteilung anpassen. Danach den Stack auf `server-erde` unter `/home/dockeradmin/docker-stacks/analytics-walkeros` starten, zunächst nur mit Log-Ausgabe. Dann Matomo mit `idSite=12` anbinden.
-
-**Entscheidungen, die `Projekt.md` noch nicht zeigt:**
-- GA4 und Google Ads bleiben im GTM-Stack, walkerOS übernimmt Matomo, Meta und Pinterest. Grund: Das Measurement Protocol ersetzt laut Google das Tagging nicht, siehe <https://github.com/elbwalker/walkerOS/discussions/757>.
-- Ein Stack bedient alle Domains. Alle gehören Christian, deshalb keine getrennten Instanzen.
+**Nächster Schritt:** Branch `feature/multi-domain` mergen, dann den Stack auf `server-erde` unter `/home/dockeradmin/docker-stacks/analytics-walkeros` starten, zunächst nur mit Log-Ausgabe. Dann Matomo mit `idSite=12` anbinden.
 
 **Blocker / Offene Fragen:**
+- `fury.lichte-kraft.eu` zeigt noch auf All-Inkl. Erst in `HOSTRULE` aufnehmen, wenn das DNS auf `server-erde` zeigt, sonst scheitert das gemeinsame Zertifikat für alle Hosts.
 - Der Matomo-Token mit Schreibrecht auf Site 12 wird noch vorbereitet. Er kommt nur in die `.env.local` auf dem Server.
 - Sendet `walker.js` im echten Browser wie erwartet per POST mit `Origin`, und lässt sich die Collector-URL zur Laufzeit ableiten? Sonst ist ein Bundle je Domain nötig.
-- Die Zahlenwerte der Ablösekriterien in `Projekt.md` sind noch nicht bestätigt.
+- Die Zahlenwerte der Bewährungskriterien in `Projekt.md` sind noch nicht bestätigt.
 
 **Stolperfallen:**
 - Das Image baut nichts: Neben `flow.mjs` müssen auch `package.json` und `node_modules/` mitgeliefert werden. Das erledigt der `Dockerfile`.
@@ -33,6 +30,7 @@
 ## Streng beachten (prüft kein Test)
 
 - `ironman.*` ist die laufende Matomo-Instanz auf `server-erde`. Der Collector darf diese Hosts nie belegen, er läuft unter `fury.*`.
+- Das Repo ist öffentlich. Interne Angaben und Secrets gehören nur in die `.env.local` auf dem Server.
 - Die Shops haben bereits GTM und Matomo eingebunden. walkerOS im Test deshalb nur an Site 12 senden und `walker.js` nur mit Test-Cookie laden.
 - `flow_simulate` sendet bei eigenen `push`-Funktionen wirklich und meldet trotzdem `0/1 destinations received`. Ziel-URLs deshalb nur über `$env` mit leerem Standardwert und Abbruch ohne URL, siehe `ReadMe-MCP-nutzen.md`.
 - `{"success":true}` von `/collect` heißt nur „angenommen". Fällt ein Ziel aus, steht das nur im Log.
