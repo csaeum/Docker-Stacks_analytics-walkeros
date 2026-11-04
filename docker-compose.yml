@@ -20,7 +20,7 @@ services:
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}-http.middlewares=redirect-to-https@file
       # HTTPS Router
       # Only browser requests from allowed origins reach the collector. No Origin header means no match.
-      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=${HOSTRULE} && Path(`/collect`) && (Method(`POST`) || Method(`OPTIONS`)) && HeaderRegexp(`Origin`, `${ALLOWED_ORIGIN_REGEX}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=(${HOSTRULE}) && Path(`/collect`) && (Method(`POST`) || Method(`OPTIONS`)) && HeaderRegexp(`Origin`, `${ALLOWED_ORIGIN_REGEX}`)
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure-https
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=letsEncrypt
       - traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${COMPOSE_PROJECT_NAME}-ratelimit

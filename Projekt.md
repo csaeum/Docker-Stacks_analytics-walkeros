@@ -1,83 +1,85 @@
 <!-- Projekt.md - walkerOS - START -->
 # Docker Stack: walkerOS – Event-Collector & Tag-Management
 
-Selbst gehosteter walkerOS-Stack. Ziel ist **ein einziges Werkzeug**, in dem alle Tracking-Ziele
-konfiguriert werden, und **möglichst kein Tracking-Skript von Drittanbietern im Browser**. Bewährt
-sich der Stack, löst er
-[`analytics-gtm-sstm-projekt`](https://git.web-seo-consulting.eu/Docker-Stacks/analytics-gtm-sstm-projekt)
-ab. Bis dahin bleibt der GTM-Stack unverändert in Betrieb.
+Selbst gehosteter walkerOS-Stack für **Matomo, Meta und Pinterest**. Die Daten laufen über den eigenen
+Collector, im Browser läuft dafür nur `walker.js`. **GA4 und Google Ads bleiben vorerst im Stack**
+[`analytics-gtm-sstm-projekt`](https://git.web-seo-consulting.eu/Docker-Stacks/analytics-gtm-sstm-projekt),
+der unverändert weiterläuft. Eine vollständige Ablösung ist derzeit nicht geplant.
 
 ## Aufbau
 
 ```
-Browser                                     Server (dieser Stack)
-walker.js ── Events an /collect ──► Traefik ──► walkeros/flow (Port 8080)
-                                  (Origin-Liste,  ├─► Matomo Tracking API
-                                   Rate-Limit)    ├─► GA4 Measurement Protocol
-                                                  ├─► Meta Conversions API
-Shop-Backend ── Käufe mit Token (Issue #1) ──►    ├─► Pinterest API
-                                                  └─► Google Data Manager (Ads)
+Browser                                       Server (dieser Stack)
+walker.js ── Events an fury.<domain>/collect ──► Traefik ──► walkeros/flow (Port 8080)
+                                    (Host, Origin-Liste,      ├─► Matomo Tracking API
+                                     Rate-Limit)              ├─► Meta Conversions API
+Shop-Backend ── Käufe mit Token (Issue #1) ──►                └─► Pinterest API
+
+GTM-Loader ── GA4 und Google Ads ──► GTM-Stack (getrennt)
 ```
 
 - **Server-Flow:** `flow.json` wird mit `@walkeros/cli` gebaut (Node.js ≥ 22.12). Das Image
   `walkeros/flow` führt nur fertige Bundles aus und lehnt eine `flow.json` ab.
-- **Web-Flow:** eigenes Bundle `walker.js`, das statisch ausgeliefert werden muss. Es ist weiterhin
-  JavaScript im Browser, sendet aber nur an den eigenen Collector. Die Auslieferung ist noch offen.
+- **Web-Flow:** eigenes Bundle `walker.js`, das der jeweilige Shop ausliefert. Die Collector-URL wird
+  beim Bauen fest eingetragen. Ob ein Bundle für alle Domains reicht, ist noch offen.
 - **Betrieb:** Routing und TLS über Traefik, Self-Healing über Autoheal, Health über `/ready`
   (nur intern). Nur eine Instanz betreiben: Der Standard-Store liegt im Speicher des Prozesses.
 
+## Domains
+
+| Collector | Website | Stand |
+|---|---|---|
+| `fury.projektleder.de` | `https://projektleder.de` | zuerst testen |
+| `fury.projektleder.at` | `https://projektleder.at` | zuerst testen |
+| `fury.projektleder.ch` | `https://projektleder.ch` | Shop im Wartungsmodus |
+| `fury.web-seo-consulting.eu` | `https://web-seo-consulting.eu` | bereit |
+| `fury.lichte-kraft.eu` | `https://lichte-kraft.eu` | kommt dazu, sobald das DNS auf `server-erde` zeigt |
+
+Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX` und `cors.origin`.
+
 ## Tracking-Ziele
 
-| Ziel | Status | Weg | Stand |
-|---|---|---|---|
-| Matomo | neu | Tracking-HTTP-API über eigene `push`-Funktion in `flow.json` | Format und IP am Testempfänger geprüft, echte Instanz offen |
-| Google Analytics 4 | ersetzt GTM | Measurement Protocol über eigene `push`-Funktion in `flow.json` | Format und IP am Testempfänger geprüft, echte Property offen |
-| Google Ads | ersetzt GTM | `@walkeros/server-destination-datamanager` | ungetestet, nur Events mit `transactionId` |
-| Meta (Facebook, Instagram) | neu | `@walkeros/server-destination-meta` | ungetestet |
-| Pinterest | neu | `@walkeros/server-destination-pinterest` | ungetestet |
-
-Reicht ein Server-Weg im Parallelbetrieb nicht aus, bleibt für das Ziel das Browser-Paket als
-Rückfallebene (`@walkeros/web-destination-gtag`, `-matomo`, `-meta`, `-pinterest`).
+| Ziel | Weg | Stand |
+|---|---|---|
+| Matomo | `@walkeros/server-destination-api` mit `before`-Transformer | Daten am Testempfänger geprüft, Test gegen `idSite=12` offen |
+| Meta (Facebook, Instagram) | `@walkeros/server-destination-meta` | Auswahl des Pixels je Domain geprüft, echte Konten offen |
+| Pinterest | `@walkeros/server-destination-pinterest` | ungetestet, Auswahl je Domain nur mit dem API-Paket geprüft |
 
 ## Entscheidungen
 
-- **Server vor Browser.** Tracking-Daten laufen möglichst nur über den eigenen Collector, weil keine
-  Drittanbieter-Skripte im Browser geladen werden sollen.
-- **Matomo und GA4 über eine eigene `push`-Funktion.** Nur sie erhält `context.ingest` mit Client-IP
-  und User-Agent. `@walkeros/server-destination-api` reicht das weder an das Mapping noch an
-  `settings.transform` weiter (getestet mit 4.8.2).
-- **GA4 ist der riskanteste Weg.** Google schreibt zum Measurement Protocol: „The intent of the
-  Measurement Protocol is to augment automatic collection through gtag, Tag Manager, and Google
-  Analytics for Firebase, not to replace it." Fehlerhafte Daten meldet die API nicht als Fehler.
-  Ob die Berichte brauchbar sind, muss der Parallelbetrieb zeigen.
-- **Google Ads nur für Conversions über den Server.** Die Data Manager API sendet nur Events mit
-  `transactionId`. Remarketing und Zielgruppen sind damit nicht abgedeckt.
-- **`/collect` nimmt nur Browser-Anfragen von erlaubten Domains an.** Traefik prüft `Origin` und
-  Methode und begrenzt die Anfragen pro IP. Skripte können `Origin` fälschen, deshalb sollen Käufe
-  nur vom Shop-Backend kommen (Issue #1).
+- **GA4 und Google Ads bleiben im GTM-Stack.** Google schreibt zum Measurement Protocol: „The intent
+  of the Measurement Protocol is to augment automatic collection through gtag, Tag Manager, and Google
+  Analytics for Firebase, not to replace it." Der walkerOS-Maintainer bestätigt das und nennt auch GA4
+  über den Data Manager nur eine Ergänzung zum Tag
+  ([Diskussion 757](https://github.com/elbwalker/walkerOS/discussions/757)).
+- **Jedes Ziel läuft nur über einen Stack.** Sonst wird doppelt gezählt.
+- **Matomo über das API-Paket statt über eine eigene `push`-Funktion.** Ein `before`-Transformer gibt
+  IP und User-Agent nur an dieses Ziel weiter (mit 4.9.0 getestet).
+- **Ein Stack für alle Domains.** Alle Domains gehören demselben Betreiber. Der Collector wählt IDs und
+  Ziele anhand von `Origin` aus und verwirft unbekannte Herkunft (mit 4.9.0 getestet). Dafür fällt bei
+  einem Fehler das Tracking aller Domains gemeinsam aus.
+- **Eigene Collector-Subdomain je Website.** Die Daten laufen über eine Subdomain der jeweiligen Website.
+- **`/collect` nimmt nur Browser-Anfragen von erlaubten Domains an.** Traefik prüft Host, `Origin` und
+  Methode und begrenzt die Anfragen pro IP. `docker-compose.yml` klammert `HOSTRULE`, weil die
+  Prüfungen sonst nur für den letzten Host gelten (getestet). Skripte können `Origin` fälschen, deshalb
+  sollen Käufe nur vom Shop-Backend kommen (Issue #1).
 
-## Ablösung des GTM-Stacks
+## Bewährung für Matomo
 
-Der GTM-Stack wird erst abgeschaltet, wenn alle Punkte erfüllt sind. Die Zahlenwerte sind
-Vorschläge und noch nicht bestätigt.
+Das bisherige Matomo-Tracking der Shops wird erst entfernt, wenn alle Punkte erfüllt sind. Die
+Zahlenwerte sind Vorschläge und noch nicht bestätigt.
 
 - [ ] Mindestens 4 Wochen Parallelbetrieb ohne Ausfall des Collectors
-- [ ] GA4: Seitenaufrufe und Events weichen höchstens 5 % von der GTM-Property ab
-- [ ] GA4: Sitzungen, Quellen und Geräte sind in den Berichten brauchbar
-- [ ] Google Ads: Conversions kommen an und weichen höchstens 5 % ab
+- [ ] Matomo: Seitenaufrufe und Bestellungen weichen höchstens 5 % von der bisherigen Site ab
 - [ ] Consent: Ohne Einwilligung geht nachweislich kein Event an das jeweilige Ziel
 
-**Im Parallelbetrieb nie dieselbe Property nutzen:** Senden GTM und walkerOS an dieselbe
-GA4-Property oder dasselbe Conversion-Label, werden die Daten doppelt gezählt. walkerOS bekommt
-dafür eine eigene GA4-Test-Property.
-
-Nach der Ablösung: GTM-Skript aus den Websites entfernen, GTM-Stack stoppen und das Repo archivieren.
+**Im Parallelbetrieb nie dieselbe Site nutzen:** Senden das bisherige Tracking und walkerOS an dieselbe
+Matomo-Site, werden die Daten doppelt gezählt. walkerOS sendet im Test deshalb nur an `idSite=12`.
 
 ## Doku
 
 - walkerOS: <https://www.walkeros.io/docs/>
 - Image: <https://hub.docker.com/r/walkeros/flow>
 - Releases: <https://github.com/elbwalker/walkerOS/releases>
-- GA4 Measurement Protocol: <https://developers.google.com/analytics/devguides/collection/protocol/ga4>
 - Matomo Tracking API: <https://developer.matomo.org/api-reference/tracking-api>
 <!-- Projekt.md - walkerOS - ENDE -->
