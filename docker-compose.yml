@@ -36,6 +36,39 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  walker:
+    build:
+      context: ./web
+      args:
+        WALKEROS_VERSION: ${WALKEROS_VERSION}
+    image: ${COMPOSE_PROJECT_NAME}-walker:${WALKEROS_VERSION}
+    container_name: ${COMPOSE_PROJECT_NAME}-walker
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    labels:
+      - autoheal=true
+      - autoheal.stop.timeout=10
+      - traefik.enable=true
+      - traefik.docker.network=${PROXY_NETWORK}
+      # Script tags send no reliable Origin, so this route checks host, path and method only.
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-walker.rule=(${HOSTRULE}) && Path(`/walker.js`) && Method(`GET`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-walker.entrypoints=websecure-https
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-walker.tls.certresolver=letsEncrypt
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-walker.middlewares=${COMPOSE_PROJECT_NAME}-ratelimit
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-walker.service=${COMPOSE_PROJECT_NAME}-walker
+      - traefik.http.services.${COMPOSE_PROJECT_NAME}-walker.loadBalancer.server.port=8080
+    networks:
+      - traefik_proxy_network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 networks:
   traefik_proxy_network:
     external: true

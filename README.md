@@ -32,8 +32,11 @@ Traefik. Er ist für Matomo, Meta und Pinterest vorgesehen. GA4 und Google Ads b
 docker compose --env-file .env --env-file .env.local up -d --build
 ```
 
-Nach jeder Änderung an `flow.json` muss das Image neu gebaut werden, weil die Flow-Konfiguration
-beim Build in das Bundle wandert. Bei einem Versions-Update `WALKEROS_VERSION` in `.env` und die
+Der Stack liefert auch `https://fury.<domain>/walker.js` aus. Neue Versionen erreichen die Websites
+damit über denselben Befehl, sie speichern die Datei bis zu einer Stunde im Cache.
+
+Nach jeder Änderung an `flow.json` oder `web/flow.web.json` müssen die Images neu gebaut werden, weil
+die Flow-Konfiguration beim Build in das Bundle wandert. Bei einem Versions-Update `WALKEROS_VERSION` in `.env` und die
 Paketversionen in `flow.json` gemeinsam anpassen.
 
 ## Prüfen
