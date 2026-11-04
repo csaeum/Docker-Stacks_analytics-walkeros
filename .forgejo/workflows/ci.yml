@@ -1,0 +1,212 @@
+# ci.yml - walkerOS - START
+name: CI
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+# Trivy läuft in zwei Jobs, die Version steht nur hier.
+env:
+  TRIVY_VERSION: 0.76.1
+  TRIVY_SHA256: c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # Gate: Lint – YAML-Dateien, flow.json und Versionsgleichheit.
+  # ----------------------------------------------------------------------------
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.13
+    defaults:
+      run:
+        shell: bash
+    env:
+      YAMLLINT_VERSION: 1.38.0
+    steps:
+      - name: Checkout (ohne externe Action)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          URL="${GITHUB_SERVER_URL/:\/\//://token:${GITHUB_TOKEN}@}"
+          git init -q .
+          git remote add origin "${URL}/${GITHUB_REPOSITORY}.git"
+          git fetch -q --depth 1 origin "${GITHUB_REF}"
+          git checkout -q FETCH_HEAD
+          git log -1 --oneline
+
+      - name: YAML-Lint
+        if: ${{ !cancelled() }}
+        run: |
+          pip install --quiet --disable-pip-version-check --root-user-action=ignore \
+            "yamllint==${YAMLLINT_VERSION}"
+          # Relaxed: lange Label-Zeilen und fehlendes "---" sind erlaubt.
+          yamllint -d "{extends: default, rules: {line-length: disable, document-start: disable, comments-indentation: disable, truthy: {check-keys: false}}}" \
+            docker-compose.yml .forgejo/workflows
+
+      - name: Gefährliche Compose-Optionen verbieten
+        if: ${{ !cancelled() }}
+        run: |
+          # Weder Semgrep (p/docker-compose) noch Trivy melden das, siehe CICD-Actions.md.
+          if grep -nE '^[[:space:]]*(- )?(privileged:[[:space:]]*true|network_mode:[[:space:]]*"?host|pid:[[:space:]]*"?host)|docker\.sock' docker-compose.yml; then
+            echo "Verbotene Option in docker-compose.yml gefunden"
+            exit 1
+          fi
+
+      - name: flow.json und Paketversionen prüfen
+        if: ${{ !cancelled() }}
+        run: |
+          # CLI, Runtime und Pakete müssen dieselbe Version haben (.env ist die Vorgabe).
+          python3 - <<'PY'
+          import json, re, sys
+          env = open(".env", encoding="utf-8").read()
+          version = re.search(r"^WALKEROS_VERSION=(\S+)$", env, re.M).group(1)
+          flow = json.load(open("flow.json", encoding="utf-8"))
+          fehler = 0
+          for name, inhalt in flow["flows"].items():
+              pakete = inhalt["config"]["bundle"]["packages"]
+              # Without this pin the bundler pulls the newest collector and the image can crash at start.
+              if "@walkeros/collector" not in pakete:
+                  print(f"{name}: @walkeros/collector ist nicht gepinnt")
+                  fehler = 1
+              for paket, angabe in pakete.items():
+                  if angabe.get("version") != version:
+                      print(f"{name}: {paket} hat {angabe.get('version')}, erwartet {version}")
+                      fehler = 1
+          sys.exit(fehler)
+          PY
+
+  # ----------------------------------------------------------------------------
+  # Gate: Sicherheit – Secrets (Gitleaks), Schwachstellen/Fehlkonfiguration (Trivy)
+  # und Code-Muster (Semgrep). Binärdateien mit fest eingetragener SHA256-Prüfsumme.
+  # Jeder Scan läuft, auch wenn ein vorheriger rot war.
+  # ----------------------------------------------------------------------------
+  sicherheit:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.13
+    defaults:
+      run:
+        shell: bash
+    env:
+      SEMGREP_VERSION: 1.182.0
+      GITLEAKS_VERSION: 8.30.1
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - name: Checkout mit voller Historie (ohne externe Action)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Ohne --depth: Gitleaks soll die komplette Historie prüfen
+          URL="${GITHUB_SERVER_URL/:\/\//://token:${GITHUB_TOKEN}@}"
+          git init -q .
+          git remote add origin "${URL}/${GITHUB_REPOSITORY}.git"
+          git fetch -q origin "${GITHUB_REF}"
+          git checkout -q FETCH_HEAD
+          git log -1 --oneline
+
+      - name: Werkzeuge installieren
+        run: |
+          BIN="${RUNNER_TEMP:-/tmp}/bin"
+          mkdir -p "${BIN}"
+          cd "${BIN}"
+          curl -fsSL --connect-timeout 10 --max-time 180 --retry 3 -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+          curl -fsSL --connect-timeout 10 --max-time 180 --retry 3 -o trivy.tar.gz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  trivy.tar.gz" | sha256sum -c -
+          tar -xzf trivy.tar.gz trivy
+          rm -f ./*.tar.gz
+          echo "${BIN}" >> "${GITHUB_PATH}"
+          pip install --quiet --disable-pip-version-check --root-user-action=ignore \
+            "semgrep==${SEMGREP_VERSION}"
+
+      - name: Secrets in der Git-Historie (Gitleaks)
+        if: ${{ !cancelled() }}
+        run: gitleaks git --redact --no-banner --verbose .
+
+      - name: Fehlkonfiguration (Trivy)
+        if: ${{ !cancelled() }}
+        run: |
+          # Secrets prüft Gitleaks; Schwachstellen im fertigen Image prüft der Job docker.
+          trivy fs --quiet --scanners misconfig --severity HIGH,CRITICAL \
+            --exit-code 1 --skip-dirs .git .
+
+      - name: Code-Muster (Semgrep)
+        if: ${{ !cancelled() }}
+        run: |
+          semgrep scan --metrics off --error \
+            --config p/dockerfile --config p/docker-compose --config p/security-audit .
+
+  # ----------------------------------------------------------------------------
+  # Gate: Docker – Compose-Konfiguration, Image-Build und Rauchtest.
+  # Der Docker-Daemon wird mit anderen Jobs geteilt: eindeutige Namen pro Lauf,
+  # keine Port-Freigabe und immer aufräumen.
+  # ----------------------------------------------------------------------------
+  docker:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: walkeros-flow:ci-${{ github.run_id }}
+      CONTAINER: walkeros-ci-${{ github.run_id }}
+    steps:
+      - name: Checkout (ohne externe Action)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          URL="${GITHUB_SERVER_URL/:\/\//://token:${GITHUB_TOKEN}@}"
+          git init -q .
+          git remote add origin "${URL}/${GITHUB_REPOSITORY}.git"
+          git fetch -q --depth 1 origin "${GITHUB_REF}"
+          git checkout -q FETCH_HEAD
+          git log -1 --oneline
+
+      - name: Compose-Konfiguration prüfen
+        run: docker compose config -q
+
+      - name: Image bauen
+        run: |
+          VERSION="$(grep -E '^WALKEROS_VERSION=' .env | cut -d= -f2)"
+          docker build --build-arg "WALKEROS_VERSION=${VERSION}" -t "${IMAGE}" .
+
+      - name: Rauchtest (Start, Bereitschaft, Event)
+        run: |
+          docker run -d --name "${CONTAINER}" "${IMAGE}" >/dev/null
+          # Prüft im Container, weil der Job den Container nicht über ein Netz erreicht.
+          BEREIT=0
+          for _ in $(seq 1 30); do
+            if docker exec "${CONTAINER}" node -e "fetch('http://localhost:8080/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
+              BEREIT=1
+              break
+            fi
+            sleep 2
+          done
+          if [ "${BEREIT}" != 1 ]; then
+            docker logs "${CONTAINER}"
+            exit 1
+          fi
+          docker exec "${CONTAINER}" node -e "fetch('http://localhost:8080/collect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'page view',data:{title:'CI'}})}).then(r=>r.json()).then(j=>{console.log(j);process.exit(j.success===true?0:1)}).catch(e=>{console.error(e);process.exit(1)})"
+          # Der Container darf nicht als root laufen.
+          test "$(docker exec "${CONTAINER}" id -u)" != "0"
+
+      - name: Schwachstellen im Image (Trivy)
+        if: ${{ !cancelled() }}
+        run: |
+          DIR="$(mktemp -d)"
+          curl -fsSL --connect-timeout 10 --max-time 180 --retry 3 -o "${DIR}/trivy.tar.gz" \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  ${DIR}/trivy.tar.gz" | sha256sum -c -
+          tar -xzf "${DIR}/trivy.tar.gz" -C "${DIR}" trivy
+          "${DIR}/trivy" image --quiet --scanners vuln --severity HIGH,CRITICAL \
+            --ignore-unfixed --exit-code 1 "${IMAGE}"
+
+      - name: Aufräumen
+        if: ${{ always() }}
+        run: |
+          docker rm -f "${CONTAINER}" >/dev/null 2>&1 || true
+          docker rmi "${IMAGE}" >/dev/null 2>&1 || true
+# ci.yml - walkerOS - ENDE

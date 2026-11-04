@@ -1,0 +1,5 @@
+# .dockerignore - walkerOS - START
+# Only flow.json may enter the build context, never .env or secrets.
+*
+!flow.json
+# .dockerignore - walkerOS - ENDE

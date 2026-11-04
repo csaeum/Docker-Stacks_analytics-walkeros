@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "walkeros-flow": {
+      "command": "npx",
+      "args": ["-y", "@walkeros/mcp@4.9.0"],
+      "env": {
+        "WALKEROS_TELEMETRY_DISABLED": "1"
+      }
+    }
+  }
+}
