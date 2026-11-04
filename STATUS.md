@@ -14,7 +14,10 @@
 
 **Stolperfallen:**
 - Das Image baut nichts: Neben `flow.mjs` müssen auch `package.json` und `node_modules/` mitgeliefert werden. Das erledigt der `Dockerfile`.
-- `cors` als Objekt mit `origin`-Liste und `$code:`-Mappings im API-Ziel sind für 4.8.2 getestet, die `origin`-Liste ist aber nicht dokumentiert. Nach Versions-Updates erneut prüfen.
+- `@walkeros/collector` muss in `flow.json` gepinnt sein. Sonst holt der Bundler die neueste Version, und der Container stürzt beim Start ab, sobald sie nicht zu `@walkeros/core` passt (am 2026-11-04 mit 4.9.0 passiert). Die CI prüft den Pin.
+- `cors` als Objekt mit `origin`-Liste, `$code:`-Mappings im API-Ziel und `context.ingest` in `push` sind für 4.9.0 getestet, die `origin`-Liste ist aber nicht dokumentiert. Nach Versions-Updates erneut prüfen.
+- Seit 4.9.0 gewähren notwendige Cookies nicht mehr `functional`, und einige CMP-Kategorien wurden neu zugeordnet. Das beim Anbinden des Consent-Tools beachten.
+- `walker.js` enthält seit 4.8.1 einen Tag-Mode-Loader, der mit `?elbMoin` ein Skript von `cdn.walkeros.io` lädt, sofern die CSP diesen Host erlaubt. Beim Web-Flow die CSP entsprechend prüfen.
 - `$env.NAME` in einer Server-Flow-URL wird erst zur Laufzeit gelesen (getestet): Das Secret steht nicht im Bundle.
 - Client-IP und User-Agent gibt es nur in einer eigenen `push`-Funktion über `context.ingest`, dafür braucht die Source `config.ingest` mit `headers.x-real-ip`. Das Mapping und `settings.transform` des API-Ziels sehen sie nicht. Die Form ist `"code": { "push": "$code:..." }`, ein Schlüssel `config` in `code` bricht den Build ab.
 - Eine eigene `push`-Funktion muss Fehler und Wiederholungen selbst behandeln. Das Verhalten bei Ausfällen des Ziels ist noch ungetestet.

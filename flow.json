@@ -6,8 +6,9 @@
         "platform": "server",
         "bundle": {
           "packages": {
-            "@walkeros/server-source-express": { "version": "4.8.2" },
-            "@walkeros/destination-demo": { "version": "4.8.2" }
+            "@walkeros/collector": { "version": "4.9.0" },
+            "@walkeros/server-source-express": { "version": "4.9.0" },
+            "@walkeros/destination-demo": { "version": "4.9.0" }
           }
         }
       },
