@@ -10,16 +10,22 @@ Forgejo.
 |---|---|
 | `lint` | `yamllint`, verbotene Compose-Optionen, gleiche Version in `.env` und `flow.json` |
 | `sicherheit` | Gitleaks (komplette Historie), Trivy (Fehlkonfiguration), Semgrep |
-| `docker` | `docker compose config`, Image-Build, Rauchtest, Trivy (Schwachstellen im Image) |
+| `docker` | `docker compose config`, Build beider Images, Rauchtests, Trivy (Schwachstellen in beiden Images) |
 
-Der Rauchtest startet das Image und prüft `/ready`, ein Event an `/collect` und dass der Container
-nicht als root läuft. Die Traefik-Regeln prüft die Pipeline nicht.
+Der Rauchtest des Collectors prüft `/ready`, ein Event an `/collect` und dass der Container nicht als
+root läuft. Der Rauchtest von `walker.js` prüft, dass der Platzhalter durch den aufgerufenen Host ersetzt
+wird, dass sonst keine Datei ausgeliefert wird und dass der Container nicht als root läuft. Die
+Traefik-Regeln prüft die Pipeline nicht.
 
 ## Regeln
 
 - Scanner-Versionen stehen fest im Workflow und sind beim Eintragen mindestens zwei Wochen alt.
 - Prüfsummen von Gitleaks und Trivy stehen fest im Workflow. Beim Update die Prüfsummen-Datei des
   Releases einmalig nutzen.
+- Die Abhängigkeiten von Semgrep stehen fest in `.forgejo/semgrep-constraints.txt`. Ohne diese Datei hing
+  die Installation am 2026-11-04 über 20 Minuten und blockierte den einzigen Runner. Beim Update von Semgrep
+  die Datei in einem frischen `python:3.13`-Container mit `pip install semgrep==<version>` und `pip freeze`
+  neu erzeugen.
 - Fehlalarme nur gezielt und mit Begründung ausnehmen: Trivy über `.trivyignore`, Semgrep über
   `# nosemgrep: <regel-id>`. Keine Werkzeuge oder Verzeichnisse pauschal abschalten.
 

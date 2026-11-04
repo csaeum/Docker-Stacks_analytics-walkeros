@@ -20,9 +20,10 @@ GTM-Loader ── GA4 und Google Ads ──► GTM-Stack (getrennt)
 
 - **Server-Flow:** `flow.json` wird mit `@walkeros/cli` gebaut (Node.js ≥ 22.12). Das Image
   `walkeros/flow` führt nur fertige Bundles aus und lehnt eine `flow.json` ab.
-- **Web-Flow:** eigenes Bundle `walker.js` aus `web/flow.web.json`, das die jeweilige Website ausliefert.
-  Die Collector-URL wird beim Bauen fest eingetragen, deshalb gibt es ein Bundle je Domain
-  (`web/build-walker.sh <collector-host>`). `web/test-loader.html` lädt es zum Testen nur mit Test-Cookie.
+- **Web-Flow:** Der Dienst `walker` liefert `https://fury.<domain>/walker.js` aus `web/flow.web.json` aus.
+  Es gibt ein Bundle für alle Domains, nginx setzt beim Ausliefern den aufgerufenen Host als Collector ein.
+  Websites binden nur das Skript ein und kopieren keine Datei. `web/test-loader.html` lädt es zum Testen
+  nur mit Test-Cookie.
 - **Betrieb:** Routing und TLS über Traefik, Self-Healing über Autoheal, Health über `/ready`
   (nur intern). Nur eine Instanz betreiben: Der Standard-Store liegt im Speicher des Prozesses.
 
@@ -61,6 +62,9 @@ Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`
   Ziele anhand von `Origin` aus und verwirft unbekannte Herkunft (mit 4.9.0 getestet). Dafür fällt bei
   einem Fehler das Tracking aller Domains gemeinsam aus.
 - **Eigene Collector-Subdomain je Website.** Die Daten laufen über eine Subdomain der jeweiligen Website.
+- **`walker.js` kommt aus dem Stack.** So kann niemand vergessen, eine neue Version auf die Websites zu
+  kopieren. Der Preis: Ein Fehler im Stack trifft sofort alle Domains, und ein fester Integritäts-Hash auf
+  der Website ist nicht möglich. Die CI prüft deshalb die ausgelieferte Datei.
 - **Kein `cors`-Block im Collector.** `walker.js` sendet per Beacon als `text/plain` ohne CORS-Prüfung, der
   Browser schickt dabei `Origin` mit (getestet). Zugriffskontrolle ist allein die `Origin`-Prüfung in Traefik.
 - **`/collect` nimmt nur Browser-Anfragen von erlaubten Domains an.** Traefik prüft Host, `Origin` und

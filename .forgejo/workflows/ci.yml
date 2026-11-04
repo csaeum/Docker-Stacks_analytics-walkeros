@@ -87,6 +87,8 @@ jobs:
   # ----------------------------------------------------------------------------
   sicherheit:
     runs-on: ubuntu-latest
+    # A hanging install must not block the only runner for hours.
+    timeout-minutes: 20
     container:
       image: python:3.13
     defaults:
@@ -111,6 +113,9 @@ jobs:
 
       - name: Werkzeuge installieren
         run: |
+          # Without fixed dependencies pip can spend many minutes resolving them.
+          pip install --quiet --disable-pip-version-check --root-user-action=ignore \
+            -c .forgejo/semgrep-constraints.txt "semgrep==${SEMGREP_VERSION}"
           BIN="${RUNNER_TEMP:-/tmp}/bin"
           mkdir -p "${BIN}"
           cd "${BIN}"
@@ -124,8 +129,6 @@ jobs:
           tar -xzf trivy.tar.gz trivy
           rm -f ./*.tar.gz
           echo "${BIN}" >> "${GITHUB_PATH}"
-          pip install --quiet --disable-pip-version-check --root-user-action=ignore \
-            "semgrep==${SEMGREP_VERSION}"
 
       - name: Secrets in der Git-Historie (Gitleaks)
         if: ${{ !cancelled() }}
@@ -154,6 +157,8 @@ jobs:
     env:
       IMAGE: walkeros-flow:ci-${{ github.run_id }}
       CONTAINER: walkeros-ci-${{ github.run_id }}
+      WALKER_IMAGE: walkeros-walker:ci-${{ github.run_id }}
+      WALKER_CONTAINER: walkeros-walker-ci-${{ github.run_id }}
     steps:
       - name: Checkout (ohne externe Action)
         env:
@@ -173,6 +178,7 @@ jobs:
         run: |
           VERSION="$(grep -E '^WALKEROS_VERSION=' .env | cut -d= -f2)"
           docker build --build-arg "WALKEROS_VERSION=${VERSION}" -t "${IMAGE}" .
+          docker build --build-arg "WALKEROS_VERSION=${VERSION}" -t "${WALKER_IMAGE}" web
 
       - name: Rauchtest (Start, Bereitschaft, Event)
         run: |
@@ -194,6 +200,35 @@ jobs:
           # Der Container darf nicht als root laufen.
           test "$(docker exec "${CONTAINER}" id -u)" != "0"
 
+      - name: Rauchtest walker.js (Host-Ersatz, Pfade, Benutzer)
+        run: |
+          docker run -d --name "${WALKER_CONTAINER}" "${WALKER_IMAGE}" >/dev/null
+          BEREIT=0
+          for _ in $(seq 1 15); do
+            if docker exec "${WALKER_CONTAINER}" wget -q -O /dev/null http://127.0.0.1:8080/healthz; then
+              BEREIT=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "${BEREIT}" != 1 ]; then
+            docker logs "${WALKER_CONTAINER}"
+            exit 1
+          fi
+          # The collector URL must follow the requested host, the placeholder must not reach a browser.
+          docker exec "${WALKER_CONTAINER}" wget -q -O /tmp/walker.js --header 'Host: fury.example.test' http://127.0.0.1:8080/walker.js
+          docker exec "${WALKER_CONTAINER}" grep -qF 'https://fury.example.test/collect' /tmp/walker.js
+          if docker exec "${WALKER_CONTAINER}" grep -qF 'collector-host.invalid' /tmp/walker.js; then
+            echo "Platzhalter wurde nicht ersetzt"
+            exit 1
+          fi
+          # Only walker.js and the health check may be served.
+          if docker exec "${WALKER_CONTAINER}" wget -q -O /dev/null http://127.0.0.1:8080/index.html; then
+            echo "Unerwartete Datei wird ausgeliefert"
+            exit 1
+          fi
+          test "$(docker exec "${WALKER_CONTAINER}" id -u)" != "0"
+
       - name: Schwachstellen im Image (Trivy)
         if: ${{ !cancelled() }}
         run: |
@@ -202,12 +237,14 @@ jobs:
             "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
           echo "${TRIVY_SHA256}  ${DIR}/trivy.tar.gz" | sha256sum -c -
           tar -xzf "${DIR}/trivy.tar.gz" -C "${DIR}" trivy
-          "${DIR}/trivy" image --quiet --scanners vuln --severity HIGH,CRITICAL \
-            --ignore-unfixed --exit-code 1 "${IMAGE}"
+          for BILD in "${IMAGE}" "${WALKER_IMAGE}"; do
+            "${DIR}/trivy" image --quiet --scanners vuln --severity HIGH,CRITICAL \
+              --ignore-unfixed --exit-code 1 "${BILD}"
+          done
 
       - name: Aufräumen
         if: ${{ always() }}
         run: |
-          docker rm -f "${CONTAINER}" >/dev/null 2>&1 || true
-          docker rmi "${IMAGE}" >/dev/null 2>&1 || true
+          docker rm -f "${CONTAINER}" "${WALKER_CONTAINER}" >/dev/null 2>&1 || true
+          docker rmi "${IMAGE}" "${WALKER_IMAGE}" >/dev/null 2>&1 || true
 # ci.yml - walkerOS - ENDE

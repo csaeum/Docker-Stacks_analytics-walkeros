@@ -46,7 +46,7 @@
           "config": {
             "consent": { "analytics": true, "marketing": true },
             "settings": {
-              "url": "$env.COLLECT_URL",
+              "url": "https://collector-host.invalid/collect",
               "transport": "beacon"
             }
           }

@@ -1,0 +1,6 @@
+# .dockerignore - walkerOS walker.js - START
+# Only these files may enter the build context.
+*
+!flow.web.json
+!nginx.conf
+# .dockerignore - walkerOS walker.js - ENDE

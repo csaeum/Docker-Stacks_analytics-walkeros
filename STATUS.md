@@ -5,7 +5,7 @@
 
 **Aktives Issue:** keines in Arbeit; #1 (Käufe serverseitig mit Token) ist angelegt und folgt später
 **Erledigt diese Sitzung:** Grundgerüst, Stack, Origin-Schutz, CI und lokaler MCP angelegt. Die CI-Gegenprobe auf dem Forgejo-Runner ist bestanden: Secret, `USER root`, falsche Paketversion und `privileged: true` wurden erkannt.
-**Nächster Schritt:** Branch `feature/web-flow` mergen und auf `server-erde` ausrollen (`/home/dockeradmin/docker-stacks/analytics-walkeros`: `git pull`, dann `docker compose --env-file .env --env-file .env.local up -d --build`). Dann `walker.js` auf `web-seo-consulting.eu` einbinden und Matomo mit `idSite=12` anbinden.
+**Nächster Schritt:** Branch `feature/walker-hosting` mergen und auf `server-erde` ausrollen (`/home/dockeradmin/docker-stacks/analytics-walkeros`: `git pull`, dann `docker compose --env-file .env --env-file .env.local up -d --build`). Dann `web/test-loader.html` in den `<head>` von `web-seo-consulting.eu` einbauen und Matomo mit `idSite=12` anbinden.
 
 **Blocker / Offene Fragen:**
 - Der Matomo-Token mit Schreibrecht auf Site 12 wird noch vorbereitet. Er kommt nur in die `.env.local` auf dem Server.
