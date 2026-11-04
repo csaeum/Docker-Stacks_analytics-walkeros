@@ -20,8 +20,9 @@ GTM-Loader ── GA4 und Google Ads ──► GTM-Stack (getrennt)
 
 - **Server-Flow:** `flow.json` wird mit `@walkeros/cli` gebaut (Node.js ≥ 22.12). Das Image
   `walkeros/flow` führt nur fertige Bundles aus und lehnt eine `flow.json` ab.
-- **Web-Flow:** eigenes Bundle `walker.js`, das der jeweilige Shop ausliefert. Die Collector-URL wird
-  beim Bauen fest eingetragen. Ob ein Bundle für alle Domains reicht, ist noch offen.
+- **Web-Flow:** eigenes Bundle `walker.js` aus `web/flow.web.json`, das die jeweilige Website ausliefert.
+  Die Collector-URL wird beim Bauen fest eingetragen, deshalb gibt es ein Bundle je Domain
+  (`web/build-walker.sh <collector-host>`). `web/test-loader.html` lädt es zum Testen nur mit Test-Cookie.
 - **Betrieb:** Routing und TLS über Traefik, Self-Healing über Autoheal, Health über `/ready`
   (nur intern). Nur eine Instanz betreiben: Der Standard-Store liegt im Speicher des Prozesses.
 
@@ -33,9 +34,10 @@ GTM-Loader ── GA4 und Google Ads ──► GTM-Stack (getrennt)
 | `fury.projektleder.at` | `https://projektleder.at` | zuerst testen |
 | `fury.projektleder.ch` | `https://projektleder.ch` | Shop im Wartungsmodus |
 | `fury.web-seo-consulting.eu` | `https://web-seo-consulting.eu` | bereit |
-| `fury.lichte-kraft.eu` | `https://lichte-kraft.eu` | kommt dazu, sobald das DNS auf `server-erde` zeigt |
+| `fury.lichte-kraft.eu` | `https://lichte-kraft.eu` | bereit |
+| `fury.projectleather.international` | `https://projectleather.international` | bereit |
 
-Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX` und `cors.origin`.
+Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`.
 
 ## Tracking-Ziele
 
@@ -59,6 +61,8 @@ Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`
   Ziele anhand von `Origin` aus und verwirft unbekannte Herkunft (mit 4.9.0 getestet). Dafür fällt bei
   einem Fehler das Tracking aller Domains gemeinsam aus.
 - **Eigene Collector-Subdomain je Website.** Die Daten laufen über eine Subdomain der jeweiligen Website.
+- **Kein `cors`-Block im Collector.** `walker.js` sendet per Beacon als `text/plain` ohne CORS-Prüfung, der
+  Browser schickt dabei `Origin` mit (getestet). Zugriffskontrolle ist allein die `Origin`-Prüfung in Traefik.
 - **`/collect` nimmt nur Browser-Anfragen von erlaubten Domains an.** Traefik prüft Host, `Origin` und
   Methode und begrenzt die Anfragen pro IP. `docker-compose.yml` klammert `HOSTRULE`, weil die
   Prüfungen sonst nur für den letzten Host gelten (getestet). Skripte können `Origin` fälschen, deshalb

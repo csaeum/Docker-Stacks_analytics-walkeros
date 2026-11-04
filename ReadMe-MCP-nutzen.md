@@ -87,23 +87,20 @@ Die Produktion läuft immer auf dem Stand von `main`.
 
 **Einrichten:**
 
-1. Die echten Website-Domains in der `flow.json` unter `cors.origin` eintragen und über einen Pull Request
-   nach `main` bringen. Domains sind nicht geheim. Lokale Änderungen auf dem Server würden dagegen bei
-   `git pull` Konflikte erzeugen.
-2. Repo auf dem Server klonen. Es ist öffentlich und braucht keinen Zugang:
+1. Repo auf dem Server klonen. Es ist öffentlich und braucht keinen Zugang:
    ```bash
    cd /home/dockeradmin/docker-stacks
    git clone https://git.web-seo-consulting.eu/Docker-Stacks/analytics-walkeros.git
    cd analytics-walkeros
    ```
-3. Datei `.env.local` anlegen. Sie liegt nicht im Git und überschreibt die Platzhalter aus `.env`:
+2. Datei `.env.local` anlegen. Sie liegt nicht im Git und überschreibt die Platzhalter aus `.env`:
    ```dotenv
-   HOSTRULE=Host(`fury.projektleder.de`) || Host(`fury.projektleder.at`) || Host(`fury.projektleder.ch`) || Host(`fury.web-seo-consulting.eu`)
-   ALLOWED_ORIGIN_REGEX='^https://(projektleder\.(de|at|ch)|web-seo-consulting\.eu|lichte-kraft\.eu)$'
+   HOSTRULE=Host(`fury.projektleder.de`) || Host(`fury.projektleder.at`) || Host(`fury.projektleder.ch`) || Host(`fury.projectleather.international`) || Host(`fury.web-seo-consulting.eu`) || Host(`fury.lichte-kraft.eu`)
+   ALLOWED_ORIGIN_REGEX='^https://(projektleder\.(de|at|ch)|projectleather\.international|web-seo-consulting\.eu|lichte-kraft\.eu)$'
    ```
    Alle Hosts einer Regel teilen sich ein Zertifikat. Nimm deshalb nur Hosts auf, deren DNS schon auf den
    Server zeigt, sonst scheitert die Ausstellung für alle.
-4. Stack starten. Diesen Befehl nutzt du auch für jedes spätere Update:
+3. Stack starten. Diesen Befehl nutzt du auch für jedes spätere Update:
    ```bash
    docker compose --env-file .env --env-file .env.local up -d --build
    ```
@@ -167,8 +164,6 @@ docker compose --env-file .env --env-file .env.dev.local down
 **Regeln für Dev:**
 
 - Nur Test-Ziele verwenden: eigene Matomo-Site und die Testmodi von Meta und Pinterest. Sonst verfälscht Dev deine echten Zahlen.
-- Für Tests im Browser muss die Dev-Domain auch in der `flow.json` des Branches unter `cors.origin` stehen.
-  `curl`-Tests funktionieren auch ohne diesen Eintrag. Diese Änderung gehört nicht nach `main`.
 - Für mehr Details `"logger": { "level": "DEBUG" }` unter `collector` in der `flow.json` des Branches setzen.
   Das gehört ebenfalls nicht nach `main`, weil das Log dadurch mehr Daten enthält.
 
@@ -252,6 +247,7 @@ Fehlern und nicht nach kompletten Events.
 - `flow_push`, `flow_bundle` und die `package`-Tools
 - Log-Meldungen bei einem Ziel-Ausfall im normalen Log-Level; laut walkerOS-Doku erscheint pro Ursache und Minute eine ERROR-Zeile
 - Zurückrollen auf einen früheren Stand
-- Echte Ziele und `walker.js` im Browser
+- Echte Ziele
+- `walker.js` auf einer echten Website: Getestet ist nur eine lokal ausgelieferte Testseite unter der echten Adresse
 - Beispiel-Prompts: Sie zeigen die Arbeitsweise und wurden nicht einzeln ausprobiert
 <!-- ReadMe-MCP-nutzen.md - walkerOS - ENDE -->

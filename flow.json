@@ -17,16 +17,7 @@
           "package": "@walkeros/server-source-express",
           "config": {
             "settings": {
-              "paths": ["/collect"],
-              "cors": {
-                "origin": [
-                  "https://projektleder.de",
-                  "https://projektleder.at",
-                  "https://projektleder.ch",
-                  "https://web-seo-consulting.eu",
-                  "https://lichte-kraft.eu"
-                ]
-              }
+              "paths": ["/collect"]
             }
           }
         }
