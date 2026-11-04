@@ -12,6 +12,7 @@ Traefik. Er soll nach einer Bewährungsphase den Stack `analytics-gtm-sstm-proje
 - [`Projekt.md`](Projekt.md): Aufbau, Tracking-Ziele, Entscheidungen und Ablösekriterien
 - [`STATUS.md`](STATUS.md): aktueller Stand und nächster Schritt
 - [`CICD-Actions.md`](CICD-Actions.md): Pipeline, Scanner und lokale Prüfung
+- [`ReadMe-MCP-nutzen.md`](ReadMe-MCP-nutzen.md): Betrieb, Dev-Instanz und Fehlersuche mit dem MCP
 
 ## Voraussetzungen
 

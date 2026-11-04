@@ -4,8 +4,8 @@
 ## Aktueller Stand — 2026-11-04
 
 **Aktives Issue:** keines in Arbeit; #1 (Käufe serverseitig mit Token) ist angelegt und folgt später
-**Erledigt diese Sitzung:** Grundgerüst, Stack, Origin-Schutz und CI auf Branch `feature/initial-stack` angelegt. Der Schutz wurde mit einem lokalen Traefik v3.6 getestet, die CI-Befehle lokal in Containern durchgespielt.
-**Nächster Schritt:** Ersten CI-Lauf des Pull Requests auf dem Forgejo-Runner prüfen, danach die Gegenprobe auf einem Wegwerf-Branch. Dann Schritt 4 (GitHub-Mirror, Release-Workflow, Dependabot) und die Matomo-`push`-Funktion gegen eine echte Instanz.
+**Erledigt diese Sitzung:** Grundgerüst, Stack, Origin-Schutz, CI und lokaler MCP auf Branch `feature/initial-stack` angelegt. Die CI ist auf dem Forgejo-Runner grün, Pull Request #2 ist offen.
+**Nächster Schritt:** Gegenprobe der CI auf einem Wegwerf-Branch, dann Pull Request #2 mergen. Danach Schritt 4 (GitHub-Mirror, Release-Workflow, Dependabot) und die Matomo-`push`-Funktion gegen eine echte Instanz.
 
 **Blocker / Offene Fragen:**
 - Erlaubte Website-Domains, Collector-Domain, Consent-Tool (CMP) und URL der Matomo-Instanz fehlen noch.
@@ -28,6 +28,9 @@
 
 ## Streng beachten (prüft kein Test)
 
+- `flow_simulate` sendet bei eigenen `push`-Funktionen wirklich und meldet trotzdem `0/1 destinations received`. Ziel-URLs deshalb nur über `$env` mit leerem Standardwert und Abbruch ohne URL, siehe `ReadMe-MCP-nutzen.md`.
+- `{"success":true}` von `/collect` heißt nur „angenommen". Fällt ein Ziel aus, steht das nur im Log.
+- In der Dev-Instanz `--env-file .env --env-file .env.dev.local` bei jedem `docker compose`-Befehl angeben, sonst trifft der Befehl die Produktion.
 - GTM und walkerOS im Parallelbetrieb nie an dieselbe GA4-Property oder dasselbe Conversion-Label senden, sonst wird doppelt gezählt.
 - Der Origin-Schutz stoppt fremde Websites, aber keine Skripte: `Origin` lässt sich außerhalb des Browsers fälschen. Browser-Events sind nie sicher echt.
 - Erlaubte Domains an zwei Stellen pflegen: `ALLOWED_ORIGIN_REGEX` in `.env` und `cors.origin` in `flow.json`.
