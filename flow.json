@@ -1,0 +1,39 @@
+{
+  "version": 4,
+  "flows": {
+    "default": {
+      "config": {
+        "platform": "server",
+        "bundle": {
+          "packages": {
+            "@walkeros/server-source-express": { "version": "4.8.2" },
+            "@walkeros/destination-demo": { "version": "4.8.2" }
+          }
+        }
+      },
+      "sources": {
+        "http": {
+          "package": "@walkeros/server-source-express",
+          "config": {
+            "settings": {
+              "paths": ["/collect"],
+              "cors": { "origin": ["https://www.example.com"] }
+            }
+          }
+        }
+      },
+      "destinations": {
+        "console": {
+          "package": "@walkeros/destination-demo",
+          "config": {
+            "settings": {
+              "name": "Event Logger",
+              "values": ["name", "data.title", "timestamp"]
+            }
+          }
+        }
+      },
+      "collector": { "run": true }
+    }
+  }
+}

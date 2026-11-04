@@ -1,0 +1,43 @@
+# docker-compose.yaml - walkerOS - START
+services:
+  walkeros:
+    build:
+      context: .
+      args:
+        WALKEROS_VERSION: ${WALKEROS_VERSION}
+    image: ${COMPOSE_PROJECT_NAME}-flow:${WALKEROS_VERSION}
+    container_name: ${COMPOSE_PROJECT_NAME}-walkerOS
+    environment:
+      TZ: ${TIMEZONE}
+    labels:
+      - autoheal=true
+      - autoheal.stop.timeout=10
+      - traefik.enable=true
+      - traefik.docker.network=${PROXY_NETWORK}
+      # HTTP Router
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-http.rule=${HOSTRULE}
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-http.entrypoints=web-http
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}-http.middlewares=redirect-to-https@file
+      # HTTPS Router
+      # Only browser requests from allowed origins reach the collector. No Origin header means no match.
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=${HOSTRULE} && Path(`/collect`) && (Method(`POST`) || Method(`OPTIONS`)) && HeaderRegexp(`Origin`, `${ALLOWED_ORIGIN_REGEX}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure-https
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=letsEncrypt
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${COMPOSE_PROJECT_NAME}-ratelimit
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-ratelimit.ratelimit.average=${RATE_LIMIT_AVERAGE}
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-ratelimit.ratelimit.burst=${RATE_LIMIT_BURST}
+      - traefik.http.services.${COMPOSE_PROJECT_NAME}.loadBalancer.server.port=8080
+    networks:
+      - traefik_proxy_network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  traefik_proxy_network:
+    external: true
+    name: ${PROXY_NETWORK}
+# docker-compose.yaml - walkerOS - ENDE
