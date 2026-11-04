@@ -25,8 +25,7 @@ Traefik. Er ist für Matomo, Meta und Pinterest vorgesehen. GA4 und Google Ads b
 ## Einrichtung
 
 1. In `.env.local` die Host-Regel `HOSTRULE` auf die Collector-Domains setzen, mehrere per `||` trennen.
-2. Die eigenen Website-Domains an zwei Stellen eintragen: `ALLOWED_ORIGIN_REGEX` in `.env.local` und
-   `cors.origin` in `flow.json`.
+2. Die eigenen Website-Domains in `ALLOWED_ORIGIN_REGEX` in `.env.local` eintragen.
 3. Stack bauen und starten:
 
 ```bash

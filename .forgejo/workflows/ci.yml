@@ -64,18 +64,19 @@ jobs:
           import json, re, sys
           env = open(".env", encoding="utf-8").read()
           version = re.search(r"^WALKEROS_VERSION=(\S+)$", env, re.M).group(1)
-          flow = json.load(open("flow.json", encoding="utf-8"))
           fehler = 0
-          for name, inhalt in flow["flows"].items():
-              pakete = inhalt["config"]["bundle"]["packages"]
-              # Without this pin the bundler pulls the newest collector and the image can crash at start.
-              if "@walkeros/collector" not in pakete:
-                  print(f"{name}: @walkeros/collector ist nicht gepinnt")
-                  fehler = 1
-              for paket, angabe in pakete.items():
-                  if angabe.get("version") != version:
-                      print(f"{name}: {paket} hat {angabe.get('version')}, erwartet {version}")
+          for datei in ("flow.json", "web/flow.web.json"):
+              flow = json.load(open(datei, encoding="utf-8"))
+              for name, inhalt in flow["flows"].items():
+                  pakete = inhalt["config"]["bundle"]["packages"]
+                  # Without this pin the bundler pulls the newest collector and the image can crash at start.
+                  if "@walkeros/collector" not in pakete:
+                      print(f"{datei} {name}: @walkeros/collector ist nicht gepinnt")
                       fehler = 1
+                  for paket, angabe in pakete.items():
+                      if angabe.get("version") != version:
+                          print(f"{datei} {name}: {paket} hat {angabe.get('version')}, erwartet {version}")
+                          fehler = 1
           sys.exit(fehler)
           PY
 

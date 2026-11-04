@@ -1,0 +1,22 @@
+<!-- test-loader.html - walkerOS - START -->
+<!--
+  Test only, replaces the consent tool until cookieconsent is connected.
+  Loads walker.js only in a browser with the cookie wk_test=1, so regular visitors get neither
+  the script nor an event. Whoever sets the cookie gives their own consent. Never use it live.
+  Set the cookie in the browser console: document.cookie = "wk_test=1; path=/; max-age=86400; secure"
+-->
+<script>
+  (function () {
+    if (!/(?:^|;\s*)wk_test=1(?:;|$)/.test(document.cookie)) return;
+    // Queue commands until walker.js has loaded.
+    window.elb = function () {
+      (window.elbLayer = window.elbLayer || []).push(arguments);
+    };
+    window.elb('walker consent', { analytics: true });
+    var script = document.createElement('script');
+    script.async = true;
+    script.src = '/js/walker.js';
+    document.head.appendChild(script);
+  })();
+</script>
+<!-- test-loader.html - walkerOS - ENDE -->
