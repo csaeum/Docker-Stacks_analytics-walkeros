@@ -1,0 +1,32 @@
+# .gitignore - walkerOS - START
+
+# ========================================
+# Build-Artefakte
+# ========================================
+dist/
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# ========================================
+# Laufzeitdaten
+# ========================================
+volumes/
+logs/
+
+# ========================================
+# Lokale Overrides / echte Secrets
+# ========================================
+.env.local
+.env.*.local
+docker-compose.*.local.yml
+docker-compose.*.local.yaml
+secrets/
+
+# ========================================
+# IDE / OS
+# ========================================
+*.iml
+.DS_Store
+
+# .gitignore - walkerOS - ENDE
