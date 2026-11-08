@@ -8,7 +8,7 @@
 # that is bundled with this source code in the file LICENSE.
 
 # Build stage: one bundle for all domains, nginx fills in the collector host per request.
-FROM node:24-alpine AS builder
+FROM node:25-alpine AS builder
 ARG WALKEROS_VERSION
 WORKDIR /build
 RUN npm init -y && npm install --save-dev @walkeros/cli@${WALKEROS_VERSION}
