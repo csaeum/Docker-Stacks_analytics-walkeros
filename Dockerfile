@@ -10,7 +10,7 @@
 ARG WALKEROS_VERSION
 
 # Build stage: the runtime image cannot bundle a flow.json itself.
-FROM node:24-alpine AS builder
+FROM node:25-alpine AS builder
 ARG WALKEROS_VERSION
 WORKDIR /build
 RUN npm init -y && npm install --save-dev @walkeros/cli@${WALKEROS_VERSION}
