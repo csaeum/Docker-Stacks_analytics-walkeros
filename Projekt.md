@@ -31,12 +31,12 @@ GTM-Loader ── GA4 und Google Ads ──► GTM-Stack (getrennt)
 
 | Collector | Website | Stand |
 |---|---|---|
-| `fury.projektleder.de` | `https://projektleder.de` | zuerst testen |
-| `fury.projektleder.at` | `https://projektleder.at` | zuerst testen |
-| `fury.projektleder.ch` | `https://projektleder.ch` | Shop im Wartungsmodus |
+| `fury.shop-a.example` | `https://shop-a.example` | zuerst testen |
+| `fury.shop-b.example` | `https://shop-b.example` | zuerst testen |
+| `fury.shop-c.example` | `https://shop-c.example` | Shop im Wartungsmodus |
 | `fury.web-seo-consulting.eu` | `https://web-seo-consulting.eu` | bereit |
-| `fury.lichte-kraft.eu` | `https://lichte-kraft.eu` | bereit |
-| `fury.projectleather.international` | `https://projectleather.international` | bereit |
+| `fury.site-e.example` | `https://site-e.example` | bereit |
+| `fury.shop-d.example` | `https://shop-d.example` | bereit |
 
 Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`.
 

@@ -10,7 +10,7 @@ Dev-Instanz experimentierst und Fehler mit dem MCP und Claude Code findest.
 Dein PC                               Server
 ─────────────────────────             ──────────────────────────────────────
 Claude Code                           Traefik
- ├─ MCP walkeros-flow                  ├─ fury.projektleder.de usw.
+ ├─ MCP walkeros-flow                  ├─ fury.shop-a.example usw.
  │   prüft und simuliert flow.json     │    └─ walkeros-walkerOS      (main)
  │                                     └─ fury-dev.deine-domain.de 
  └─ ssh ── liest Container-Logs ───►        └─ walkeros-dev-walkerOS  (Branch)
@@ -95,8 +95,8 @@ Die Produktion läuft immer auf dem Stand von `main`.
    ```
 2. Datei `.env.local` anlegen. Sie liegt nicht im Git und überschreibt die Platzhalter aus `.env`:
    ```dotenv
-   HOSTRULE=Host(`fury.projektleder.de`) || Host(`fury.projektleder.at`) || Host(`fury.projektleder.ch`) || Host(`fury.projectleather.international`) || Host(`fury.web-seo-consulting.eu`) || Host(`fury.lichte-kraft.eu`)
-   ALLOWED_ORIGIN_REGEX='^https://(projektleder\.(de|at|ch)|projectleather\.international|web-seo-consulting\.eu|lichte-kraft\.eu)$'
+   HOSTRULE=Host(`fury.shop-a.example`) || Host(`fury.shop-b.example`) || Host(`fury.shop-c.example`) || Host(`fury.shop-d.example`) || Host(`fury.web-seo-consulting.eu`) || Host(`fury.site-e.example`)
+   ALLOWED_ORIGIN_REGEX='^https://(shop-(a|b|c)\.example|shop-d\.example|web-seo-consulting\.eu|site-e\.example)$'
    ```
    Alle Hosts einer Regel teilen sich ein Zertifikat. Nimm deshalb nur Hosts auf, deren DNS schon auf den
    Server zeigt, sonst scheitert die Ausstellung für alle.
@@ -109,8 +109,8 @@ Die Produktion läuft immer auf dem Stand von `main`.
 
 ```bash
 docker inspect --format '{{.State.Health.Status}}' walkeros-walkerOS   # muss "healthy" sein
-curl -X POST https://fury.projektleder.de/collect \
-  -H 'Origin: https://projektleder.de' \
+curl -X POST https://fury.shop-a.example/collect \
+  -H 'Origin: https://shop-a.example' \
   -H 'Content-Type: application/json' \
   -d '{"name":"page view","data":{"title":"Test"}}'                    # {"success":true,...}
 ```
