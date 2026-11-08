@@ -1,0 +1,37 @@
+# release-checks.yml - walkerOS - START
+name: Release-Checks
+
+# Second check stage: runs on GitHub only for release tags, to save Actions minutes.
+# Everyday CI runs on Forgejo (.forgejo/workflows/ci.yml).
+
+"on":
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  codeql:
+    # CodeQL is only free for public repositories. While this one is private the job is skipped,
+    # so it neither fails nor uses paid features.
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      # javascript-typescript covers the inline script in web/test-loader.html,
+      # actions covers the workflow files themselves.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370  # v4.39.1
+        with:
+          languages: javascript-typescript, actions
+          build-mode: none
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370  # v4.39.1
+# release-checks.yml - walkerOS - ENDE
