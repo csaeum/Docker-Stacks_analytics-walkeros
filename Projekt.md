@@ -44,7 +44,7 @@ Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`
 
 | Ziel | Weg | Stand |
 |---|---|---|
-| Matomo | `@walkeros/server-destination-api` mit `before`-Transformer | Daten am Testempfänger geprüft, Test gegen `idSite=12` offen |
+| Matomo | `@walkeros/server-destination-api` mit `before`-Transformer | live mit `idSite=12` geprüft (nur `page view` von `web-seo-consulting.eu`) |
 | Meta (Facebook, Instagram) | `@walkeros/server-destination-meta` | Auswahl des Pixels je Domain geprüft, echte Konten offen |
 | Pinterest | `@walkeros/server-destination-pinterest` | ungetestet, Auswahl je Domain nur mit dem API-Paket geprüft |
 
@@ -57,7 +57,9 @@ Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`
   ([Diskussion 757](https://github.com/elbwalker/walkerOS/discussions/757)).
 - **Jedes Ziel läuft nur über einen Stack.** Sonst wird doppelt gezählt.
 - **Matomo über das API-Paket statt über eine eigene `push`-Funktion.** Ein `before`-Transformer gibt
-  IP und User-Agent nur an dieses Ziel weiter (mit 4.9.0 getestet).
+  IP und User-Agent nur an dieses Ziel weiter (mit 4.9.0 live getestet). Adresse und Token kommen per
+  `$env` aus der `.env.local` auf dem Server, weil das Repo öffentlich ist. Eine weitere Matomo-Instanz
+  bekommt ein eigenes Ziel mit eigenen Variablen.
 - **Ein Stack für alle Domains.** Alle Domains gehören demselben Betreiber. Der Collector wählt IDs und
   Ziele anhand von `Origin` aus und verwirft unbekannte Herkunft (mit 4.9.0 getestet). Dafür fällt bei
   einem Fehler das Tracking aller Domains gemeinsam aus.

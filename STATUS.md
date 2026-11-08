@@ -4,21 +4,26 @@
 ## Aktueller Stand — 2026-11-08
 
 **Aktives Issue:** keines in Arbeit; #1 (Käufe serverseitig mit Token) ist angelegt und folgt später
-**Erledigt diese Sitzung:** `walker.js` läuft auf `server-erde` für alle Domains. `web/test-loader.html` ist auf `web-seo-consulting.eu` über die Analytics-Snippets im Sulu-Admin eingebunden. Ein Testbesuch mit Cookie kam im Collector an (`session start`, `page view`).
-**Nächster Schritt:** Auf Branch `feature/matomo-site12` Matomo mit `idSite=12` anbinden (`@walkeros/server-destination-api` mit `before`-Transformer, siehe `Projekt.md`). Das Demo-Ziel loggt nur `name`, `data.title` und `timestamp`, die Seitenadresse steht nicht im Log.
+**Erledigt diese Sitzung:** `walker.js` ist auf `web-seo-consulting.eu` eingebunden (nur mit Test-Cookie). Matomo ist angebunden und ausgerollt: Seitenaufrufe von `web-seo-consulting.eu` kommen in Site 12 mit Client-Daten und echter IP an.
+**Nächster Schritt:** cookieconsent an walkerOS anbinden, damit `web/test-loader.html` durch den echten Einwilligungs-Weg ersetzt werden kann (siehe „Streng beachten“).
 
 **Blocker / Offene Fragen:**
-- Der Matomo-Token mit Schreibrecht auf Site 12 wird noch vorbereitet. Er kommt nur in die `.env.local` auf dem Server.
 - Die Zahlenwerte der Bewährungskriterien in `Projekt.md` sind noch nicht bestätigt.
 
 **Stolperfallen:**
+- Matomo lehnt eine Anfrage mit `cip` mit HTTP 400 ab („Tracker API 'cip' was used, requires valid token_auth“), wenn der Benutzer des Tokens auf der Site nur „Ansehen“ darf. Er braucht mindestens „Schreiben“.
+- Matomo verlangt für `_id` genau 16 Hex-Zeichen. Die Funktion in `flow.json` kürzt bzw. füllt deshalb auf.
+- Ohne `MATOMO_URL` meldet das Matomo-Ziel bei jedem Event „Config settings url missing“. Das ist harmlos, es wird dann nichts gesendet.
+- Auf `server-erde` ist der SSH-Benutzer `root`, das Repo gehört `dockeradmin`: `git` dort mit `runuser -u dockeradmin -- git …` ausführen.
+- Nach `up -d` liefert `walker.js` etwa 30 Sekunden lang 404, bis der Healthcheck grün ist und Traefik weiterleitet.
+- Das Demo-Ziel loggt nur `name`, `data.title` und `timestamp`. Ob Matomo eine Anfrage angenommen hat, steht nicht im Log, nur Fehler.
 - Das Image baut nichts: Neben `flow.mjs` müssen auch `package.json` und `node_modules/` mitgeliefert werden. Das erledigt der `Dockerfile`.
 - `@walkeros/collector` muss in `flow.json` gepinnt sein. Sonst holt der Bundler die neueste Version, und der Container stürzt beim Start ab, sobald sie nicht zu `@walkeros/core` passt (am 2026-11-04 mit 4.9.0 passiert). Die CI prüft den Pin.
 - `$code:`-Mappings im API-Ziel und `context.ingest` in `push` sind für 4.9.0 getestet. Nach Versions-Updates erneut prüfen.
 - Seit 4.9.0 gewähren notwendige Cookies nicht mehr `functional`, und einige CMP-Kategorien wurden neu zugeordnet. Das beim Anbinden des Consent-Tools beachten.
 - `walker.js` enthält einen Tag-Mode-Loader, in den Schemas der genutzten Pakete steht keine Einstellung zum Abschalten. `?elbMoin` allein lädt nichts (im Browser getestet). Erst eine Nachricht von `https://app.walkeros.io` lädt ein Skript von `cdn.walkeros.io`, geprüft per Hash aus derselben Nachricht. Dagegen hilft nur eine CSP auf der Website, die den Host nicht erlaubt.
 - `$env.NAME` in einer Server-Flow-URL wird erst zur Laufzeit gelesen (getestet): Das Secret steht nicht im Bundle.
-- Client-IP und User-Agent gibt es nur in einer eigenen `push`-Funktion über `context.ingest`, dafür braucht die Source `config.ingest` mit `headers.x-real-ip`. Das Mapping und `settings.transform` des API-Ziels sehen sie nicht. Die Form ist `"code": { "push": "$code:..." }`, ein Schlüssel `config` in `code` bricht den Build ab.
+- Client-IP und User-Agent kommen über `config.ingest` der Source (`headers.x-real-ip`, `headers.user-agent`). Das Mapping und `settings.transform` des API-Ziels sehen `ingest` nicht, deshalb kopiert der `before`-Transformer `requestContext` die Werte auf `user.ip` und `user.userAgent`. Die Form ist `"code": { "push": "$code:..." }`, ein Schlüssel `config` in `code` bricht den Build ab.
 - Eine eigene `push`-Funktion muss Fehler und Wiederholungen selbst behandeln. Das Verhalten bei Ausfällen des Ziels ist noch ungetestet.
 - Traefik überschreibt gefälschte `X-Real-Ip`-Header (getestet). Das gilt nur, solange der Client nicht aus `forwardedHeaders.trustedIPs` kommt; dort steht aktuell nur `127.0.0.1/32`.
 - Der Build-Hinweis `InvalidDefaultArgInFrom` ist harmlos: Er entsteht, weil `WALKEROS_VERSION` keinen Standardwert hat und aus `.env` kommt.
