@@ -9,6 +9,9 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}-walkerOS
     environment:
       TZ: ${TIMEZONE}
+      # Real values only in .env.local on the server; empty means nothing is sent to Matomo
+      MATOMO_URL: ${MATOMO_URL:-}
+      MATOMO_TOKEN_AUTH: ${MATOMO_TOKEN_AUTH:-}
     labels:
       - autoheal=true
       - autoheal.stop.timeout=10
