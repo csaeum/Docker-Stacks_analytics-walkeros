@@ -17,7 +17,7 @@ RUN npx walkeros bundle flow.web.json --flow web -o dist/walker.js \
   && grep -qF 'https://collector-host.invalid/collect' dist/walker.js
 
 # Runtime stage: serves only walker.js and listens on 8080 as a non-root user.
-FROM nginxinc/nginx-unprivileged:1.30.6-alpine3.24
+FROM nginxinc/nginx-unprivileged:1.31.7-alpine3.24
 # The base image lags behind Alpine security fixes, the scan in CI fails without this.
 USER root
 RUN apk upgrade --no-cache
