@@ -45,8 +45,8 @@ Paketversionen in `flow.json` gemeinsam anpassen.
 # Container-Status, muss "healthy" sein
 docker inspect --format '{{.State.Health.Status}}' walkeros-walkerOS
 
-curl -X POST https://fury.projektleder.de/collect \
-  -H 'Origin: https://projektleder.de' \
+curl -X POST https://fury.shop-a.example/collect \
+  -H 'Origin: https://shop-a.example' \
   -H 'Content-Type: application/json' \
   -d '{"name":"page view","data":{"title":"Home"}}'
 

@@ -31,12 +31,12 @@ GTM-Loader ── GA4 und Google Ads ──► GTM-Stack (getrennt)
 
 | Collector | Website | Stand |
 |---|---|---|
-| `fury.projektleder.de` | `https://projektleder.de` | zuerst testen |
-| `fury.projektleder.at` | `https://projektleder.at` | zuerst testen |
-| `fury.projektleder.ch` | `https://projektleder.ch` | Shop im Wartungsmodus |
+| `fury.shop-a.example` | `https://shop-a.example` | zuerst testen |
+| `fury.shop-b.example` | `https://shop-b.example` | zuerst testen |
+| `fury.shop-c.example` | `https://shop-c.example` | Shop im Wartungsmodus |
 | `fury.web-seo-consulting.eu` | `https://web-seo-consulting.eu` | bereit |
-| `fury.lichte-kraft.eu` | `https://lichte-kraft.eu` | bereit |
-| `fury.projectleather.international` | `https://projectleather.international` | bereit |
+| `fury.site-e.example` | `https://site-e.example` | bereit |
+| `fury.shop-d.example` | `https://shop-d.example` | bereit |
 
 Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`.
 
@@ -44,7 +44,7 @@ Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`
 
 | Ziel | Weg | Stand |
 |---|---|---|
-| Matomo | `@walkeros/server-destination-api` mit `before`-Transformer | Daten am Testempfänger geprüft, Test gegen `idSite=12` offen |
+| Matomo | `@walkeros/server-destination-api` mit `before`-Transformer | live mit `idSite=12` geprüft (nur `page view` von `web-seo-consulting.eu`) |
 | Meta (Facebook, Instagram) | `@walkeros/server-destination-meta` | Auswahl des Pixels je Domain geprüft, echte Konten offen |
 | Pinterest | `@walkeros/server-destination-pinterest` | ungetestet, Auswahl je Domain nur mit dem API-Paket geprüft |
 
@@ -57,7 +57,9 @@ Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`
   ([Diskussion 757](https://github.com/elbwalker/walkerOS/discussions/757)).
 - **Jedes Ziel läuft nur über einen Stack.** Sonst wird doppelt gezählt.
 - **Matomo über das API-Paket statt über eine eigene `push`-Funktion.** Ein `before`-Transformer gibt
-  IP und User-Agent nur an dieses Ziel weiter (mit 4.9.0 getestet).
+  IP und User-Agent nur an dieses Ziel weiter (mit 4.9.0 live getestet). Adresse und Token kommen per
+  `$env` aus der `.env.local` auf dem Server, weil das Repo öffentlich ist. Eine weitere Matomo-Instanz
+  bekommt ein eigenes Ziel mit eigenen Variablen.
 - **Ein Stack für alle Domains.** Alle Domains gehören demselben Betreiber. Der Collector wählt IDs und
   Ziele anhand von `Origin` aus und verwirft unbekannte Herkunft (mit 4.9.0 getestet). Dafür fällt bei
   einem Fehler das Tracking aller Domains gemeinsam aus.
