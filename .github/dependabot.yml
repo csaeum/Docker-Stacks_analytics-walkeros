@@ -1,0 +1,22 @@
+# dependabot.yml - walkerOS - START
+# The Forgejo push mirror deletes branches that only exist on GitHub, including Dependabot's.
+# Its pull requests are therefore hints only. Apply updates on Forgejo.
+#
+# Note: walkeros/flow and the @walkeros packages are pinned via WALKEROS_VERSION in .env and
+# flow.json. Dependabot does not see them; check https://github.com/elbwalker/walkerOS/releases.
+version: 2
+updates:
+  - package-ecosystem: docker
+    directories:
+      - /
+      - /web
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+# dependabot.yml - walkerOS - ENDE
