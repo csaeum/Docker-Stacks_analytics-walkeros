@@ -8,7 +8,8 @@
           "packages": {
             "@walkeros/collector": { "version": "4.9.0" },
             "@walkeros/server-source-express": { "version": "4.9.0" },
-            "@walkeros/destination-demo": { "version": "4.9.0" }
+            "@walkeros/destination-demo": { "version": "4.9.0" },
+            "@walkeros/server-destination-api": { "version": "4.9.0" }
           }
         }
       },
@@ -18,7 +19,33 @@
           "config": {
             "settings": {
               "paths": ["/collect"]
+            },
+            "ingest": {
+              "map": {
+                "ip": "headers.x-real-ip",
+                "userAgent": "headers.user-agent",
+                "origin": "headers.origin"
+              }
             }
+          }
+        }
+      },
+      "transformers": {
+        "matomoSites": {
+          "next": {
+            "one": [
+              {
+                "match": { "key": "ingest.origin", "operator": "eq", "value": "https://web-seo-consulting.eu" },
+                "next": "requestContext"
+              },
+              { "stop": true }
+            ]
+          }
+        },
+        "requestContext": {
+          "code": {
+            "type": "requestContext",
+            "push": "$code:(event, context) => { const ingest = (context && context.ingest) || {}; return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent } } }; }"
           }
         }
       },
@@ -29,6 +56,48 @@
             "settings": {
               "name": "Event Logger",
               "values": ["name", "data.title", "timestamp"]
+            }
+          }
+        },
+        "matomo": {
+          "package": "@walkeros/server-destination-api",
+          "before": "matomoSites",
+          "config": {
+            "consent": { "analytics": true },
+            "settings": {
+              "url": "$env.MATOMO_URL:",
+              "headers": {
+                "Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
+              },
+              "transform": "$code:(data) => new URLSearchParams(Object.entries(data).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => [k, typeof v === 'object' ? JSON.stringify(v) : String(v)])).toString()"
+            },
+            "data": {
+              "map": {
+                "idsite": { "value": 12 },
+                "rec": { "value": 1 },
+                "apiv": { "value": 1 },
+                "send_image": { "value": 0 },
+                "url": "source.url",
+                "urlref": "source.referrer",
+                "_id": {
+                  "fn": "$code:(event) => { const d = event.user && event.user.device; return d ? d.split('').map((c) => (parseInt(c, 36) % 16).toString(16)).join('').padEnd(16, '0').slice(0, 16) : undefined; }"
+                },
+                "cip": "user.ip",
+                "ua": "user.userAgent",
+                "lang": "user.language",
+                "res": "user.screenSize",
+                "token_auth": { "value": "$env.MATOMO_TOKEN_AUTH:" }
+              }
+            },
+            "mapping": {
+              "page": {
+                "view": {
+                  "data": { "map": { "action_name": "data.title" } }
+                }
+              },
+              "*": {
+                "*": { "ignore": true }
+              }
             }
           }
         }
