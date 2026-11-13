@@ -43,13 +43,13 @@
         "meta1Context": {
           "code": {
             "type": "meta1Context",
-            "push": "$code:(event, context) => { const origins = (process.env.META_1_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean); const ingest = (context && context.ingest) || {}; if (!origins.includes(ingest.origin)) { return false; } const found = {}; String(ingest.cookie || '').split(';').forEach((part) => { const pair = part.trim(); const i = pair.indexOf('='); if (i > 0 && pair.slice(0, i) === '_fbp' || pair.slice(0, i) === '_fbc') { found[pair.slice(0, i)] = pair.slice(i + 1); } }); return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent, fbp: found._fbp, fbc: found._fbc } } }; }"
+            "push": "$code:(event, context) => { const origins = (process.env.META_1_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean); const ingest = (context && context.ingest) || {}; if (!origins.includes(ingest.origin)) { return false; } const store = (globalThis.wscUserData = globalThis.wscUserData || new Map()); const device = event.user && event.user.device; const now = Date.now(); store.forEach((entry, key) => { if (now - entry.t > 1800000) { store.delete(key); } }); if (event.name === 'user data') { const hash = event.data && event.data.email; if (device && typeof hash === 'string' && /^[a-f0-9]{64}$/.test(hash)) { store.set(device, { t: now, em: hash }); } return false; } const known = device ? store.get(device) : undefined; const found = {}; String(ingest.cookie || '').split(';').forEach((part) => { const pair = part.trim(); const i = pair.indexOf('='); if (i > 0 && pair.slice(0, i) === '_fbp' || pair.slice(0, i) === '_fbc') { found[pair.slice(0, i)] = pair.slice(i + 1); } }); let click; try { click = new URL(event.source && event.source.url).searchParams.get('fbclid') || undefined; } catch (error) { click = undefined; } return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent, fbp: found._fbp, fbc: found._fbc, fbclid: found._fbc ? undefined : click, em: known ? known.em : undefined } } }; }"
           }
         },
         "pinterest1Context": {
           "code": {
             "type": "pinterest1Context",
-            "push": "$code:(event, context) => { const origins = (process.env.PINTEREST_1_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean); const ingest = (context && context.ingest) || {}; if (!origins.includes(ingest.origin)) { return false; } const found = {}; String(ingest.cookie || '').split(';').forEach((part) => { const pair = part.trim(); const i = pair.indexOf('='); if (i > 0 && pair.slice(0, i) === '_epik') { found[pair.slice(0, i)] = pair.slice(i + 1); } }); return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent, epik: found._epik } } }; }"
+            "push": "$code:(event, context) => { const origins = (process.env.PINTEREST_1_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean); const ingest = (context && context.ingest) || {}; if (!origins.includes(ingest.origin)) { return false; } const store = (globalThis.wscUserData = globalThis.wscUserData || new Map()); const device = event.user && event.user.device; const now = Date.now(); store.forEach((entry, key) => { if (now - entry.t > 1800000) { store.delete(key); } }); if (event.name === 'user data') { const hash = event.data && event.data.email; if (device && typeof hash === 'string' && /^[a-f0-9]{64}$/.test(hash)) { store.set(device, { t: now, em: hash }); } return false; } const known = device ? store.get(device) : undefined; const found = {}; String(ingest.cookie || '').split(';').forEach((part) => { const pair = part.trim(); const i = pair.indexOf('='); if (i > 0 && pair.slice(0, i) === '_epik') { found[pair.slice(0, i)] = pair.slice(i + 1); } }); let click; try { click = new URL(event.source && event.source.url).searchParams.get('epik') || undefined; } catch (error) { click = undefined; } return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent, epik: found._epik || click, em: known ? [known.em] : undefined } } }; }"
           }
         }
       },
@@ -157,16 +157,19 @@
           "before": "meta1Context",
           "config": {
             "consent": {
-              "meta": true
+              "metaServer": true
             },
             "settings": {
               "accessToken": "$env.META_1_ACCESS_TOKEN:",
               "pixelId": "$env.META_1_PIXEL_ID:",
               "test_event_code": "$env.META_1_TEST_EVENT_CODE:",
+            "doNotHash": ["em"],
               "url": "$env.META_1_URL:https://graph.facebook.com/v22.0/",
               "user_data": {
                 "fbp": "user.fbp",
-                "fbc": "user.fbc"
+                "fbc": "user.fbc",
+              "fbclid": "user.fbclid",
+              "em": "user.em"
               }
             },
             "mapping": {
@@ -377,15 +380,17 @@
           "before": "pinterest1Context",
           "config": {
             "consent": {
-              "pinterest": true
+              "pinterestServer": true
             },
             "settings": {
               "accessToken": "$env.PINTEREST_1_ACCESS_TOKEN:",
               "adAccountId": "$env.PINTEREST_1_AD_ACCOUNT_ID:",
               "test": "$env.PINTEREST_1_TEST:",
+            "doNotHash": ["em"],
               "url": "$env.PINTEREST_1_URL:https://api.pinterest.com/v5/",
               "user_data": {
-                "click_id": "user.epik"
+                "click_id": "user.epik",
+              "em": "user.em"
               }
             },
             "mapping": {
