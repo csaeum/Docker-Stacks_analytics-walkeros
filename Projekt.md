@@ -1,10 +1,10 @@
 <!-- Projekt.md - walkerOS - START -->
 # Docker Stack: walkerOS – Event-Collector & Tag-Management
 
-Selbst gehosteter walkerOS-Stack für **Matomo, Meta und Pinterest**. Die Daten laufen über den eigenen
-Collector, im Browser läuft dafür nur `walker.js`. **GA4 und Google Ads bleiben vorerst im Stack**
-[`analytics-gtm-sstm-projekt`](https://git.web-seo-consulting.eu/Docker-Stacks/analytics-gtm-sstm-projekt),
-der unverändert weiterläuft. Eine vollständige Ablösung ist derzeit nicht geplant.
+Selbst gehosteter walkerOS-Stack für **Matomo, Meta, Pinterest und GA4**. Die Daten laufen über den eigenen
+Collector, im Browser läuft dafür nur `walker.js`. **GA4 läuft im Browser über walkerOS** (`@walkeros/web-destination-gtag`,
+Entscheidung 2026-11-13). Der GTM-Stack [`analytics-gtm-sstm-projekt`](https://git.web-seo-consulting.eu/Docker-Stacks/analytics-gtm-sstm-projekt)
+bleibt für Google Ads, bis das ebenfalls umgezogen ist; dieselbe GA4-Property darf nie von beiden beliefert werden.
 
 ## Aufbau
 
@@ -15,7 +15,7 @@ walker.js ── Events an fury.<domain>/collect ──► Traefik ──► wal
                                      Rate-Limit)              ├─► Meta Conversions API
 Shop-Backend ── Käufe mit Token (Issue #1) ──►                └─► Pinterest API
 
-GTM-Loader ── GA4 und Google Ads ──► GTM-Stack (getrennt)
+GTM-Loader ── nur noch Google Ads ──► GTM-Stack (getrennt)
 ```
 
 - **Server-Flow:** `flow.json` wird mit `@walkeros/cli` gebaut (Node.js ≥ 22.12). Das Image
@@ -45,6 +45,7 @@ Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`
 | Ziel | Weg | Stand |
 |---|---|---|
 | Matomo | `@walkeros/server-destination-api` mit `before`-Transformer `requestContext` (Herkunftsprüfung, IP, User-Agent) | `page view` live mit `idSite=12` geprüft (`web-seo-consulting.eu`); alle Events des Sulu-Bundles gemappt (siehe unten), lokal gegen eine Matomo-Attrappe geprüft, live offen |
+| GA4 | `@walkeros/web-destination-gtag` im Browser, Mess-ID je Website über die Adresse `walker.js?ga4=G-…` (nginx setzt sie ein, Platzhalter im Repo), Einwilligungsschlüssel `ga4`, Consent Mode v2 | lokal im Echtlauf geprüft (Realtime), live offen |
 | Meta (Facebook, Instagram) | `@walkeros/server-destination-meta` | Auswahl des Pixels je Domain geprüft, echte Konten offen |
 | Pinterest | `@walkeros/server-destination-pinterest` | ungetestet, Auswahl je Domain nur mit dem API-Paket geprüft |
 
@@ -80,7 +81,7 @@ Das Matomo-Ziel bekommt sie nur mit `consent.analytics`. Alles, was nicht in der
 
 ## Entscheidungen
 
-- **GA4 und Google Ads bleiben im GTM-Stack.** Google schreibt zum Measurement Protocol: „The intent
+- **GA4 läuft über walkerOS im Browser (gtag-Ziel), nicht über das Measurement Protocol.** Das ersetzt die frühere Entscheidung „bleibt im GTM-Stack“. Gründe: gtag ist der von Google vorgesehene Weg, Consent Mode v2 übernimmt das Ziel selbst, und ein Stack statt zwei. Google schreibt zum Measurement Protocol: „The intent
   of the Measurement Protocol is to augment automatic collection through gtag, Tag Manager, and Google
   Analytics for Firebase, not to replace it." Der walkerOS-Maintainer bestätigt das und nennt auch GA4
   über den Data Manager nur eine Ergänzung zum Tag

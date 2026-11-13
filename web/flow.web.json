@@ -6,10 +6,27 @@
         "platform": "web",
         "bundle": {
           "packages": {
-            "@walkeros/collector": { "version": "4.9.0" },
-            "@walkeros/web-source-browser": { "version": "4.9.0" },
-            "@walkeros/web-source-session": { "version": "4.9.0" },
-            "@walkeros/web-destination-api": { "version": "4.9.0" }
+            "@walkeros/collector": {
+              "version": "4.9.0"
+            },
+            "@walkeros/web-source-browser": {
+              "version": "4.9.0"
+            },
+            "@walkeros/web-source-session": {
+              "version": "4.9.0"
+            },
+            "@walkeros/web-destination-api": {
+              "version": "4.9.0"
+            },
+            "@walkeros/web-destination-gtag": {
+              "version": "4.9.0"
+            },
+            "@walkeros/web-destination-meta": {
+              "version": "4.9.0"
+            },
+            "@walkeros/web-destination-pinterest": {
+              "version": "4.9.0"
+            }
           }
         }
       },
@@ -18,7 +35,9 @@
           "package": "@walkeros/web-source-browser",
           "primary": true,
           "config": {
-            "settings": { "pageview": true }
+            "settings": {
+              "pageview": true
+            }
           }
         },
         "session": {
@@ -28,7 +47,10 @@
               "storage": true,
               "deviceStorage": "cookie",
               "deviceAge": 30,
-              "consent": ["analytics", "marketing"]
+              "consent": [
+                "analytics",
+                "marketing"
+              ]
             }
           }
         }
@@ -39,6 +61,12 @@
             "type": "deviceContext",
             "push": "$code:(event) => { if (!(event.consent && event.consent.analytics)) return { event }; return { event: { ...event, user: { ...event.user, language: window.navigator.language, screenSize: window.screen.width + 'x' + window.screen.height } } }; }"
           }
+        },
+        "ga4Enabled": {
+          "code": {
+            "type": "ga4Enabled",
+            "push": "$code:(event) => { const id = \"G-XXXXXXXXXX\"; return /^G-X+$/.test(id) ? false : { event }; }"
+          }
         }
       },
       "destinations": {
@@ -46,10 +74,700 @@
           "package": "@walkeros/web-destination-api",
           "before": "deviceContext",
           "config": {
-            "consent": { "analytics": true, "marketing": true },
+            "consent": {
+              "analytics": true,
+              "marketing": true
+            },
             "settings": {
               "url": "https://collector-host.invalid/collect",
               "transport": "beacon"
+            }
+          }
+        },
+        "ga4": {
+          "package": "@walkeros/web-destination-gtag",
+          "config": {
+            "consent": {
+              "ga4": true
+            },
+            "loadScript": true,
+            "settings": {
+              "ga4": {
+                "measurementId": "G-XXXXXXXXXX",
+                "pageview": false,
+                "snakeCase": true
+              }
+            },
+            "mapping": {
+              "product": {
+                "view": {
+                  "name": "view_item",
+                  "data": {
+                    "map": {
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": {
+                        "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                      },
+                      "items": {
+                        "loop": [
+                          "this",
+                          {
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "click": {
+                  "name": "select_item",
+                  "data": {
+                    "map": {
+                      "items": {
+                        "loop": [
+                          "this",
+                          {
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "add": {
+                  "name": "add_to_cart",
+                  "data": {
+                    "map": {
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": {
+                        "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                      },
+                      "items": {
+                        "loop": [
+                          "this",
+                          {
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "remove": {
+                  "name": "remove_from_cart",
+                  "data": {
+                    "map": {
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": {
+                        "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                      },
+                      "items": {
+                        "loop": [
+                          "this",
+                          {
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "list": {
+                "view": {
+                  "name": "view_item_list",
+                  "data": {
+                    "map": {
+                      "item_list_name": "data.name"
+                    }
+                  }
+                }
+              },
+              "cart": {
+                "view": {
+                  "name": "view_cart",
+                  "data": {
+                    "map": {
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": "data.value",
+                      "items": {
+                        "loop": [
+                          "nested",
+                          {
+                            "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "checkout": {
+                  "ignore": true
+                }
+              },
+              "order": {
+                "start": {
+                  "name": "begin_checkout",
+                  "data": {
+                    "map": {
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": "data.value",
+                      "items": {
+                        "loop": [
+                          "nested",
+                          {
+                            "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "complete": {
+                  "name": "purchase",
+                  "data": {
+                    "map": {
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": "data.value",
+                      "items": {
+                        "loop": [
+                          "nested",
+                          {
+                            "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "transaction_id": "data.id",
+                      "tax": "data.tax",
+                      "shipping": "data.shipping",
+                      "coupon": "data.coupon"
+                    }
+                  }
+                }
+              },
+              "checkout": {
+                "step": {
+                  "ignore": true
+                }
+              },
+              "search": {
+                "view": {
+                  "name": "search",
+                  "data": {
+                    "map": {
+                      "search_term": "data.term"
+                    }
+                  }
+                }
+              },
+              "file": {
+                "download": {
+                  "name": "file_download",
+                  "data": {
+                    "map": {
+                      "file_name": "data.name",
+                      "file_extension": "data.type"
+                    }
+                  }
+                }
+              },
+              "link": {
+                "outbound": {
+                  "name": "outbound_click",
+                  "data": {
+                    "map": {
+                      "link_domain": "data.host"
+                    }
+                  }
+                }
+              },
+              "contact": {
+                "click": {
+                  "name": "contact_click",
+                  "data": {
+                    "map": {
+                      "kind": "data.kind"
+                    }
+                  }
+                }
+              },
+              "cta": {
+                "click": {
+                  "name": "cta_click",
+                  "data": {
+                    "map": {
+                      "name": "data.name"
+                    }
+                  }
+                }
+              },
+              "teaser": {
+                "click": {
+                  "name": "teaser_click",
+                  "data": {
+                    "map": {
+                      "name": "data.name"
+                    }
+                  }
+                },
+                "visible": {
+                  "name": "teaser_visible",
+                  "data": {
+                    "map": {
+                      "name": "data.name"
+                    }
+                  }
+                }
+              },
+              "accordion": {
+                "toggle": {
+                  "name": "accordion_toggle",
+                  "data": {
+                    "map": {
+                      "name": "data.name"
+                    }
+                  }
+                }
+              },
+              "video": {
+                "start": {
+                  "name": "video_start",
+                  "data": {
+                    "map": {
+                      "provider": "data.provider",
+                      "video_id": "data.id"
+                    }
+                  }
+                },
+                "progress": {
+                  "name": "video_progress",
+                  "data": {
+                    "map": {
+                      "provider": "data.provider",
+                      "video_id": "data.id",
+                      "video_percent": "data.percent"
+                    }
+                  }
+                },
+                "complete": {
+                  "name": "video_complete",
+                  "data": {
+                    "map": {
+                      "provider": "data.provider",
+                      "video_id": "data.id"
+                    }
+                  }
+                }
+              },
+              "user": {
+                "data": {
+                  "ignore": true
+                }
+              },
+              "session": {
+                "start": {
+                  "ignore": true
+                }
+              }
+            }
+          },
+          "before": "ga4Enabled"
+        },
+        "meta": {
+          "package": "@walkeros/web-destination-meta",
+          "config": {
+            "consent": {
+              "meta": true
+            },
+            "loadScript": true,
+            "settings": {
+              "pixelId": "9990000000001"
+            },
+            "mapping": {
+              "page": {
+                "view": {
+                  "name": "PageView"
+                }
+              },
+              "product": {
+                "view": {
+                  "name": "ViewContent",
+                  "data": {
+                    "map": {
+                      "content_type": {
+                        "value": "product"
+                      },
+                      "contents": {
+                        "set": [
+                          {
+                            "map": {
+                              "id": "data.id",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": {
+                        "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                      }
+                    }
+                  }
+                },
+                "add": {
+                  "name": "AddToCart",
+                  "data": {
+                    "map": {
+                      "content_type": {
+                        "value": "product"
+                      },
+                      "contents": {
+                        "set": [
+                          {
+                            "map": {
+                              "id": "data.id",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": {
+                        "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                      }
+                    }
+                  }
+                }
+              },
+              "order": {
+                "start": {
+                  "name": "InitiateCheckout",
+                  "data": {
+                    "map": {
+                      "content_type": {
+                        "value": "product"
+                      },
+                      "contents": {
+                        "loop": [
+                          "nested",
+                          {
+                            "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
+                            "map": {
+                              "id": "data.id",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "num_items": {
+                        "fn": "$code:(event) => Array.isArray(event.nested) ? event.nested.filter((n) => n && n.entity === \"product\").length : 0"
+                      },
+                      "value": "data.value"
+                    }
+                  }
+                },
+                "complete": {
+                  "name": "Purchase",
+                  "data": {
+                    "map": {
+                      "content_type": {
+                        "value": "product"
+                      },
+                      "contents": {
+                        "loop": [
+                          "nested",
+                          {
+                            "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
+                            "map": {
+                              "id": "data.id",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "num_items": {
+                        "fn": "$code:(event) => Array.isArray(event.nested) ? event.nested.filter((n) => n && n.entity === \"product\").length : 0"
+                      },
+                      "value": "data.value"
+                    }
+                  }
+                }
+              },
+              "checkout": {
+                "step": {
+                  "name": "AddPaymentInfo",
+                  "condition": "$code:(event) => !!event.data && event.data.step === \"payment\"",
+                  "data": {
+                    "map": {
+                      "content_type": {
+                        "value": "product"
+                      },
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": "data.value"
+                    }
+                  }
+                }
+              },
+              "*": {
+                "*": {
+                  "ignore": true
+                }
+              }
+            }
+          }
+        },
+        "pinterest": {
+          "package": "@walkeros/web-destination-pinterest",
+          "config": {
+            "consent": {
+              "pinterest": true
+            },
+            "settings": {
+              "apiKey": "9990000000002"
+            },
+            "mapping": {
+              "page": {
+                "view": {
+                  "ignore": true
+                }
+              },
+              "product": {
+                "view": {
+                  "name": "pagevisit",
+                  "data": {
+                    "map": {
+                      "value": "data.price",
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "line_items": {
+                        "set": [
+                          {
+                            "map": {
+                              "product_id": "data.id",
+                              "product_name": "data.name",
+                              "product_price": "data.price",
+                              "product_quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "add": {
+                  "name": "addtocart",
+                  "data": {
+                    "map": {
+                      "value": {
+                        "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                      },
+                      "order_quantity": {
+                        "key": "data.quantity",
+                        "value": 1
+                      },
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "line_items": {
+                        "set": [
+                          {
+                            "map": {
+                              "product_id": "data.id",
+                              "product_name": "data.name",
+                              "product_price": "data.price",
+                              "product_quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "list": {
+                "view": {
+                  "name": "viewcategory",
+                  "data": {
+                    "map": {
+                      "line_items": {
+                        "set": [
+                          {
+                            "map": {
+                              "product_category": "data.name"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "order": {
+                "complete": {
+                  "name": "checkout",
+                  "data": {
+                    "map": {
+                      "value": "data.value",
+                      "order_id": "data.id",
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "line_items": {
+                        "loop": [
+                          "nested",
+                          {
+                            "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
+                            "map": {
+                              "product_id": "data.id",
+                              "product_name": "data.name",
+                              "product_price": "data.price",
+                              "product_quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "*": {
+                "*": {
+                  "ignore": true
+                }
+              }
             }
           }
         }
