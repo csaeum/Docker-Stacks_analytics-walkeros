@@ -1,8 +1,9 @@
 <!-- capi.md - walkerOS - START -->
 # Meta Conversions API und Pinterest API (serverseitig)
 
-Zusätzlich zu den Browser-Zielen (`flow.web.json`) schickt der Collector (`flow.json`) dieselben Shop-Events
-serverseitig an Meta und Pinterest. Die Event-ID ist die von `walker.js` vergebene und damit **dieselbe wie im Browser**,
+Der Collector (`flow.json`) schickt die Shop-Events serverseitig an Meta und Pinterest. Das geht **mit oder ohne** das
+Browser-Ziel (`flow.web.json`): Läuft der Pixel im Browser, gibt es zu jedem Ereignis ein Browser- und ein Server-Gegenstück;
+läuft nur der Serverweg, sammelt `walker.js` die Events und sendet sie an den Collector, ein Pixel wird nicht geladen. Die Event-ID ist die von `walker.js` vergebene und damit **dieselbe wie im Browser**,
 so führen Meta und Pinterest Browser- und Server-Ereignis zu einem zusammen. Das hilft bei Werbeblockern und
 Safari-Einschränkungen.
 
@@ -21,9 +22,16 @@ Safari-Einschränkungen.
 Alles andere wird verworfen. Beträge als Zahl (Meta) bzw. Text mit zwei Nachkommastellen (Pinterest), Währung `EUR`,
 Positionen als `contents`. Es gehen keine Formularinhalte und keine Klartext-Kontaktdaten raus.
 
-`user_data`: Client-IP und User-Agent (Pflicht für die Zuordnung), dazu die Klick-Kennungen aus den Cookies
-`_fbp` und `_fbc` (Meta) bzw. `_epik` (Pinterest). Aus dem Cookie-Header liest der Collector **nur diese Namen**, der Rest wird
-verworfen. Die gehashte E-Mail für den erweiterten Abgleich ist noch nicht angebunden.
+`user_data`:
+- Client-IP und User-Agent (Pflicht für die Zuordnung).
+- Klick-Kennungen aus den Cookies `_fbp` und `_fbc` (Meta) bzw. `_epik` (Pinterest). Aus dem Cookie-Header liest der Collector
+  **nur diese Namen**, der Rest wird verworfen. Fehlt das Cookie (kein Pixel im Browser), nimmt der Collector `fbclid` bzw. `epik` aus der
+  Adresse der Seite (`event.source.url`); Meta bildet daraus `fbc`.
+- **Gehashte E-Mail** (erweiterter Abgleich, Meta `em`, Pinterest `em`): Das Sulu-Bundle sendet nach einem erfolgreichen Formular
+  das Event `user data` mit dem SHA-256 der E-Mail (Opt-in je Webspace, nur mit Marketing-Einwilligung). Der Collector merkt sich den Hash
+  **30 Minuten im Arbeitsspeicher** zur Geräte-Kennung (`user.device`) und hängt ihn an die folgenden Events dieses Geräts. Das `user data`-Event selbst geht
+  nicht an Meta oder Pinterest. Der Hash wird nicht erneut gehasht (`doNotHash`), nicht auf die Platte geschrieben und mit einem Neustart verworfen.
+  Die Telefonnummer wird nicht übertragen: Der Hash des Bundles ist für Google normalisiert (`+49…`), Meta und Pinterest erwarten nur Ziffern.
 **Datenschutz:** IP und User-Agent gehen an Meta bzw. Pinterest. Wer das nicht will, setzt in den `settings` des Ziels
 `"ip": false` und `"userAgent": false` (Meta verlangt den User-Agent für Website-Ereignisse, die Zuordnung leidet dann).
 
@@ -32,10 +40,18 @@ verworfen. Die gehashte E-Mail für den erweiterten Abgleich ist noch nicht ange
 Alle Bedingungen müssen stimmen:
 
 1. Die `Origin` der Anfrage steht in `META_1_ORIGIN` bzw. `PINTEREST_1_ORIGIN` (Liste, mit Komma getrennt).
-2. Der Einwilligungsschlüssel `meta` bzw. `pinterest` ist im Event `true`. Den setzt das Sulu-Bundle nur mit
-   Marketing-Einwilligung **und** gepflegter Pixel-/Tag-ID des Webspaces. Ohne Marketing-Einwilligung geht nichts raus.
+2. Der Einwilligungsschlüssel `metaServer` bzw. `pinterestServer` ist im Event `true`. Den setzt das Sulu-Bundle nur mit
+   Marketing-Einwilligung **und** eingeschaltetem „Serverseitig senden“ des Webspaces (unabhängig von der Pixel-ID im Browser).
+   Ohne Marketing-Einwilligung geht nichts raus.
 3. Token und ID sind in der `.env.local` gesetzt. Sind sie leer (Standard), läuft der Collector normal weiter und
    sendet nichts an das Ziel.
+
+## Nur Serverweg
+
+Im Sulu-Admin je Webspace „Serverseitig senden“ einschalten und das Feld für die Pixel-/Tag-ID **leer lassen**: Dann lädt der Browser weder
+`fbq` noch `pintrk`, und alle Events laufen über den Collector. Für die Zuordnung setzt das Bundle mit Marketing-Einwilligung die
+Cookies `_fbc` und `_epik` aus dem Klick auf der Eintrittsseite selbst (wie der Pixel es täte), damit die Kennung auch bei einem
+späteren Kauf noch da ist, sonst würde sie nur auf der Landeseite mitgehen.
 
 ## Konfiguration (`.env.local` auf dem Server, nie im Repo)
 
@@ -50,7 +66,7 @@ PINTEREST_1_ACCESS_TOKEN=<Conversion-Token>
 PINTEREST_1_TEST=                  # true = Testendpunkt, nichts wird gespeichert
 ```
 
-`META_1_PIXEL_ID` muss die Pixel-ID sein, die im Sulu-Admin für diesen Webspace steht, sonst landen Browser- und Server-Event
+Läuft der Pixel zusätzlich im Browser, muss `META_1_PIXEL_ID` dieselbe ID sein wie im Sulu-Admin, sonst landen Browser- und Server-Event
 in verschiedenen Pixeln und werden nicht zusammengeführt. Dasselbe gilt für Pinterest (Tag-ID und Ad-Account gehören zum selben Konto).
 
 **Mehrere Konten** (eine Website mit anderem Pixel oder Pinterest-Konto): In `flow.json` die Blöcke
