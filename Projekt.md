@@ -44,7 +44,7 @@ Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`
 
 | Ziel | Weg | Stand |
 |---|---|---|
-| Matomo | `@walkeros/server-destination-api` mit `before`-Transformer | `page view` live mit `idSite=12` geprüft (`web-seo-consulting.eu`); alle Events des Sulu-Bundles gemappt (siehe unten), lokal gegen eine Matomo-Attrappe geprüft, live offen |
+| Matomo | `@walkeros/server-destination-api` mit `before`-Transformer `requestContext` (Herkunftsprüfung, IP, User-Agent) | `page view` live mit `idSite=12` geprüft (`web-seo-consulting.eu`); alle Events des Sulu-Bundles gemappt (siehe unten), lokal gegen eine Matomo-Attrappe geprüft, live offen |
 | Meta (Facebook, Instagram) | `@walkeros/server-destination-meta` | Auswahl des Pixels je Domain geprüft, echte Konten offen |
 | Pinterest | `@walkeros/server-destination-pinterest` | ungetestet, Auswahl je Domain nur mit dem API-Paket geprüft |
 
@@ -86,7 +86,7 @@ Das Matomo-Ziel bekommt sie nur mit `consent.analytics`. Alles, was nicht in der
   über den Data Manager nur eine Ergänzung zum Tag
   ([Diskussion 757](https://github.com/elbwalker/walkerOS/discussions/757)).
 - **Jedes Ziel läuft nur über einen Stack.** Sonst wird doppelt gezählt.
-- **Matomo über das API-Paket statt über eine eigene `push`-Funktion.** Ein `before`-Transformer gibt
+- **Matomo über das API-Paket statt über eine eigene `push`-Funktion.** Ein `before`-Transformer prüft die Herkunft (`MATOMO_ORIGIN`) und gibt
   IP und User-Agent nur an dieses Ziel weiter (mit 4.9.0 live getestet). Adresse und Token kommen per
   `$env` aus der `.env.local` auf dem Server, weil das Repo öffentlich ist. Eine weitere Matomo-Instanz
   bekommt ein eigenes Ziel mit eigenen Variablen.

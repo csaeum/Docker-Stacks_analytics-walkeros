@@ -14,7 +14,8 @@
 
 **Stolperfallen:**
 - Eine Matomo-Anfrage mit `search=` zählt Matomo selbst als Seitenaufruf. Deshalb ist die Suche im Mapping ein Ereignis (Begründung in `Projekt.md`).
-- Das Mapping lässt sich lokal ohne Matomo prüfen: Als `MATOMO_URL` eine lokale Attrappe setzen, die die Anfragen nur ausgibt. Der `before`-Transformer verwirft jede Herkunft außer der eingetragenen, ein lokaler Test braucht also denselben `Origin` (zum Beispiel über einen kleinen Vorschalter, der ihn setzt).
+- Lokal gibt es eine komplette Umgebung mit echtem Matomo (`docs/lokal.md`, `lokal/lokal.sh up`). Die Herkunft, deren Events an Matomo gehen, kommt aus `MATOMO_ORIGIN` (Standard im Compose: die Produktions-Website, lokal die DDEV-Testseite). Der `before`-Transformer `requestContext` verwirft jede andere Herkunft und gibt `false` zurück. **Ein `$env.…` im `match`-Wert eines Transformers wird nicht aufgelöst** (bleibt als Text im Bundle stehen, alles wird verworfen); deshalb steht die Prüfung in `push` über `process.env`.
+- `docker compose up --build` meldet bei einem fehlgeschlagenen Bundle-Schritt den Fehler nur weit oben; ein Skript, das die Ausgabe kürzt, startet dann stillschweigend mit dem alten Image. Nach jedem Build prüfen, dass er durchlief (Fehler in `flow.json`, zum Beispiel unmaskierte Anführungszeichen in `$code:`).
 - Im Mapping braucht ein Wert mit Rückfall die Form `{ "key": "data.type", "value": "file" }`, ein fester Wert `{ "value": 25 }`. Zahlen kommen bei Matomo als Text an (`"25"`), das genügt für `e_v`.
 - Matomo lehnt eine Anfrage mit `cip` mit HTTP 400 ab („Tracker API 'cip' was used, requires valid token_auth“), wenn der Benutzer des Tokens auf der Site nur „Ansehen“ darf. Er braucht mindestens „Schreiben“.
 - Matomo verlangt für `_id` genau 16 Hex-Zeichen. Die Funktion in `flow.json` kürzt bzw. füllt deshalb auf.
@@ -28,7 +29,7 @@
 - Seit 4.9.0 gewähren notwendige Cookies nicht mehr `functional`, und einige CMP-Kategorien wurden neu zugeordnet. Das beim Anbinden des Consent-Tools beachten.
 - `walker.js` enthält einen Tag-Mode-Loader, in den Schemas der genutzten Pakete steht keine Einstellung zum Abschalten. `?elbMoin` allein lädt nichts (im Browser getestet). Erst eine Nachricht von `https://app.walkeros.io` lädt ein Skript von `cdn.walkeros.io`, geprüft per Hash aus derselben Nachricht. Dagegen hilft nur eine CSP auf der Website, die den Host nicht erlaubt.
 - `$env.NAME` in einer Server-Flow-URL wird erst zur Laufzeit gelesen (getestet): Das Secret steht nicht im Bundle.
-- Client-IP und User-Agent kommen über `config.ingest` der Source (`headers.x-real-ip`, `headers.user-agent`). Das Mapping und `settings.transform` des API-Ziels sehen `ingest` nicht, deshalb kopiert der `before`-Transformer `requestContext` die Werte auf `user.ip` und `user.userAgent`. Die Form ist `"code": { "push": "$code:..." }`, ein Schlüssel `config` in `code` bricht den Build ab.
+- Client-IP und User-Agent kommen über `config.ingest` der Source (`headers.x-real-ip`, `headers.user-agent`). Das Mapping und `settings.transform` des API-Ziels sehen `ingest` nicht, deshalb prüft und kopiert der `before`-Transformer `requestContext` die Werte auf `user.ip` und `user.userAgent`. Die Form ist `"code": { "push": "$code:..." }`, ein Schlüssel `config` in `code` bricht den Build ab.
 - Eine eigene `push`-Funktion muss Fehler und Wiederholungen selbst behandeln. Das Verhalten bei Ausfällen des Ziels ist noch ungetestet.
 - Traefik überschreibt gefälschte `X-Real-Ip`-Header (getestet). Das gilt nur, solange der Client nicht aus `forwardedHeaders.trustedIPs` kommt; dort steht aktuell nur `127.0.0.1/32`.
 - Der Build-Hinweis `InvalidDefaultArgInFrom` ist harmlos: Er entsteht, weil `WALKEROS_VERSION` keinen Standardwert hat und aus `.env` kommt.

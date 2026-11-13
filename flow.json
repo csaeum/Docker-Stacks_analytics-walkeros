@@ -31,21 +31,10 @@
         }
       },
       "transformers": {
-        "matomoSites": {
-          "next": {
-            "one": [
-              {
-                "match": { "key": "ingest.origin", "operator": "eq", "value": "https://web-seo-consulting.eu" },
-                "next": "requestContext"
-              },
-              { "stop": true }
-            ]
-          }
-        },
         "requestContext": {
           "code": {
             "type": "requestContext",
-            "push": "$code:(event, context) => { const ingest = (context && context.ingest) || {}; return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent } } }; }"
+            "push": "$code:(event, context) => { const origin = process.env.MATOMO_ORIGIN; const ingest = (context && context.ingest) || {}; if (!origin || ingest.origin !== origin) { return false; } return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent } } }; }"
           }
         }
       },
@@ -61,7 +50,7 @@
         },
         "matomo": {
           "package": "@walkeros/server-destination-api",
-          "before": "matomoSites",
+          "before": "requestContext",
           "config": {
             "consent": { "analytics": true },
             "settings": {

@@ -1,0 +1,21 @@
+# docker-compose.lokal.yml - walkerOS - START
+# Lokale Umgebung ohne Traefik: Ports nur auf localhost, Matomo aus dem DDEV-Projekt "matomo".
+# Aufruf ueber lokal/lokal.sh, Beschreibung in docs/lokal.md.
+services:
+  walkeros:
+    ports:
+      - "127.0.0.1:18080:8080"
+    networks:
+      - traefik_proxy_network
+      - matomo_ddev
+  walker:
+    ports:
+      - "127.0.0.1:18081:8080"
+    volumes:
+      - ./lokal/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+networks:
+  matomo_ddev:
+    external: true
+    name: ddev-matomo_default
+# docker-compose.lokal.yml - walkerOS - ENDE
