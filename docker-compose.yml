@@ -12,6 +12,8 @@ services:
       # Real values only in .env.local on the server; empty means nothing is sent to Matomo
       MATOMO_URL: ${MATOMO_URL:-}
       MATOMO_TOKEN_AUTH: ${MATOMO_TOKEN_AUTH:-}
+      # Website whose events go to Matomo (site 12); other origins are dropped by the matomoSites transformer
+      MATOMO_ORIGIN: ${MATOMO_ORIGIN:-https://web-seo-consulting.eu}
     labels:
       - autoheal=true
       - autoheal.stop.timeout=10
