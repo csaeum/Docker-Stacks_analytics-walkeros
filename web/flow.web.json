@@ -55,6 +55,12 @@
             "type": "deviceContext",
             "push": "$code:(event) => { if (!(event.consent && event.consent.analytics)) return { event }; return { event: { ...event, user: { ...event.user, language: window.navigator.language, screenSize: window.screen.width + 'x' + window.screen.height } } }; }"
           }
+        },
+        "ga4Enabled": {
+          "code": {
+            "type": "ga4Enabled",
+            "push": "$code:(event) => { const id = \"G-XXXXXXXXXX\"; return /^G-X+$/.test(id) ? false : { event }; }"
+          }
         }
       },
       "destinations": {
@@ -76,7 +82,7 @@
           "package": "@walkeros/web-destination-gtag",
           "config": {
             "consent": {
-              "analytics": true
+              "ga4": true
             },
             "loadScript": true,
             "settings": {
@@ -449,7 +455,8 @@
                 }
               }
             }
-          }
+          },
+          "before": "ga4Enabled"
         }
       }
     }
