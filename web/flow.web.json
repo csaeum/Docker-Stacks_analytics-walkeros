@@ -96,7 +96,9 @@
                         "key": "data.currency",
                         "value": "EUR"
                       },
-                      "value": "data.price",
+                      "value": {
+                        "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                      },
                       "items": {
                         "loop": [
                           "this",
@@ -151,7 +153,9 @@
                         "key": "data.currency",
                         "value": "EUR"
                       },
-                      "value": "data.price",
+                      "value": {
+                        "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                      },
                       "items": {
                         "loop": [
                           "this",
@@ -181,7 +185,9 @@
                         "key": "data.currency",
                         "value": "EUR"
                       },
-                      "value": "data.price",
+                      "value": {
+                        "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                      },
                       "items": {
                         "loop": [
                           "this",
@@ -228,9 +234,7 @@
                         "loop": [
                           "nested",
                           {
-                            "condition": {
-                              "$code": "e=>\"object\"==typeof e&&null!==e&&\"entity\"in e&&\"product\"===e.entity"
-                            },
+                            "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
                             "map": {
                               "item_id": "data.id",
                               "item_name": "data.name",
@@ -266,9 +270,7 @@
                         "loop": [
                           "nested",
                           {
-                            "condition": {
-                              "$code": "e=>\"object\"==typeof e&&null!==e&&\"entity\"in e&&\"product\"===e.entity"
-                            },
+                            "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
                             "map": {
                               "item_id": "data.id",
                               "item_name": "data.name",
@@ -299,9 +301,7 @@
                         "loop": [
                           "nested",
                           {
-                            "condition": {
-                              "$code": "e=>\"object\"==typeof e&&null!==e&&\"entity\"in e&&\"product\"===e.entity"
-                            },
+                            "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
                             "map": {
                               "item_id": "data.id",
                               "item_name": "data.name",
