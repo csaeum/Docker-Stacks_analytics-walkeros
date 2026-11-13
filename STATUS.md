@@ -1,16 +1,21 @@
 <!-- STATUS.md - walkerOS - START -->
 # Status
 
-## Aktueller Stand — 2026-11-08
+## Aktueller Stand — 2026-11-13
 
-**Aktives Issue:** keines in Arbeit; #1 (Käufe serverseitig mit Token) ist angelegt und folgt später
-**Erledigt diese Sitzung:** `walker.js` ist auf `web-seo-consulting.eu` eingebunden (nur mit Test-Cookie). Matomo ist angebunden und ausgerollt: Seitenaufrufe von `web-seo-consulting.eu` kommen in Site 12 mit Client-Daten und echter IP an.
-**Nächster Schritt:** cookieconsent an walkerOS anbinden, damit `web/test-loader.html` durch den echten Einwilligungs-Weg ersetzt werden kann (siehe „Streng beachten“).
+**Aktives Issue:** #10 (Mappings für die Events des Sulu-Bundles): Matomo ist umgesetzt und lokal geprüft, Meta und Pinterest sind offen. Danach #11 (Geräte-Kennung als Cookie). #1 (Käufe serverseitig mit Token) folgt später.
+**Erledigt:** `flow.json` mappt alle Events des Sulu-Bundles `wsc_sulubundle_walkeros` auf Matomo (Tabelle in `Projekt.md`, Abschnitt „Event-Mapping für Matomo“). Geprüft mit dem echten `walker.js` im Browser und einer lokalen Matomo-Attrappe: Jede Zeile kommt mit den erwarteten Feldern an, `user data` und `session start` gehen nicht an Matomo, Besucher ohne `analytics` erreichen Matomo nicht, und die Suche erzeugt keinen zusätzlichen Seitenaufruf. Matomo live ist nicht geprüft.
+**Nächster Schritt:** Nach dem Deploy durch Christian Matomo live prüfen (Site 12: Ereignisse und Outlinks erscheinen, Seitenaufrufe werden nicht doppelt gezählt). Dann Meta und Pinterest (Pixel, Token und Konten kommen als `$env` aus der `.env.local`, nichts davon im Repo).
 
 **Blocker / Offene Fragen:**
 - Die Zahlenwerte der Bewährungskriterien in `Projekt.md` sind noch nicht bestätigt.
+- **GA4 und Google Ads:** `Projekt.md` lässt sie im GTM-Stack, das Issue #10 nennt „GA4 über gtag“ als Ziel. Das muss Christian entscheiden, bevor dafür etwas gebaut wird. Bis dahin passiert dazu nichts.
+- Die Einwilligungs-Anbindung (`web/test-loader.html` ersetzen) liefert jetzt das Sulu-Bundle `wsc_sulubundle_walkeros` mit seinem Loader. Ersetzen lässt sich die Testseite, sobald die Website das Bundle einsetzt.
 
 **Stolperfallen:**
+- Eine Matomo-Anfrage mit `search=` zählt Matomo selbst als Seitenaufruf. Deshalb ist die Suche im Mapping ein Ereignis (Begründung in `Projekt.md`).
+- Das Mapping lässt sich lokal ohne Matomo prüfen: Als `MATOMO_URL` eine lokale Attrappe setzen, die die Anfragen nur ausgibt. Der `before`-Transformer verwirft jede Herkunft außer der eingetragenen, ein lokaler Test braucht also denselben `Origin` (zum Beispiel über einen kleinen Vorschalter, der ihn setzt).
+- Im Mapping braucht ein Wert mit Rückfall die Form `{ "key": "data.type", "value": "file" }`, ein fester Wert `{ "value": 25 }`. Zahlen kommen bei Matomo als Text an (`"25"`), das genügt für `e_v`.
 - Matomo lehnt eine Anfrage mit `cip` mit HTTP 400 ab („Tracker API 'cip' was used, requires valid token_auth“), wenn der Benutzer des Tokens auf der Site nur „Ansehen“ darf. Er braucht mindestens „Schreiben“.
 - Matomo verlangt für `_id` genau 16 Hex-Zeichen. Die Funktion in `flow.json` kürzt bzw. füllt deshalb auf.
 - Ohne `MATOMO_URL` meldet das Matomo-Ziel bei jedem Event „Config settings url missing“. Das ist harmlos, es wird dann nichts gesendet.
