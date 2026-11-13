@@ -26,6 +26,8 @@
           "config": {
             "settings": {
               "storage": true,
+              "deviceStorage": "cookie",
+              "deviceAge": 30,
               "consent": ["analytics", "marketing"]
             }
           }
