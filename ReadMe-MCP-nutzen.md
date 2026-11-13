@@ -10,9 +10,9 @@ Dev-Instanz experimentierst und Fehler mit dem MCP und Claude Code findest.
 Dein PC                               Server
 ─────────────────────────             ──────────────────────────────────────
 Claude Code                           Traefik
- ├─ MCP walkeros-flow                  ├─ fury.shop-a.example usw.
+ ├─ MCP walkeros-flow                  ├─ collect.shop-a.example usw.
  │   prüft und simuliert flow.json     │    └─ walkeros-walkerOS      (main)
- │                                     └─ fury-dev.deine-domain.de 
+ │                                     └─ collect-dev.deine-domain.de 
  └─ ssh ── liest Container-Logs ───►        └─ walkeros-dev-walkerOS  (Branch)
 ```
 
@@ -89,13 +89,13 @@ Die Produktion läuft immer auf dem Stand von `main`.
 
 1. Repo auf dem Server klonen. Es ist öffentlich und braucht keinen Zugang:
    ```bash
-   cd /home/dockeradmin/docker-stacks
+   cd <stack-verzeichnis>
    git clone https://git.web-seo-consulting.eu/Docker-Stacks/analytics-walkeros.git
    cd analytics-walkeros
    ```
 2. Datei `.env.local` anlegen. Sie liegt nicht im Git und überschreibt die Platzhalter aus `.env`:
    ```dotenv
-   HOSTRULE=Host(`fury.shop-a.example`) || Host(`fury.shop-b.example`) || Host(`fury.shop-c.example`) || Host(`fury.shop-d.example`) || Host(`fury.web-seo-consulting.eu`) || Host(`fury.site-e.example`)
+   HOSTRULE=Host(`collect.shop-a.example`) || Host(`collect.shop-b.example`) || Host(`collect.shop-c.example`) || Host(`collect.shop-d.example`) || Host(`collect.web-seo-consulting.eu`) || Host(`collect.site-e.example`)
    ALLOWED_ORIGIN_REGEX='^https://(shop-(a|b|c)\.example|shop-d\.example|web-seo-consulting\.eu|site-e\.example)$'
    ```
    Alle Hosts einer Regel teilen sich ein Zertifikat. Nimm deshalb nur Hosts auf, deren DNS schon auf den
@@ -109,7 +109,7 @@ Die Produktion läuft immer auf dem Stand von `main`.
 
 ```bash
 docker inspect --format '{{.State.Health.Status}}' walkeros-walkerOS   # muss "healthy" sein
-curl -X POST https://fury.shop-a.example/collect \
+curl -X POST https://collect.shop-a.example/collect \
   -H 'Origin: https://shop-a.example' \
   -H 'Content-Type: application/json' \
   -d '{"name":"page view","data":{"title":"Test"}}'                    # {"success":true,...}

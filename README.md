@@ -32,7 +32,7 @@ Traefik. Er ist für Matomo, Meta und Pinterest vorgesehen. GA4 und Google Ads b
 docker compose --env-file .env --env-file .env.local up -d --build
 ```
 
-Der Stack liefert auch `https://fury.<domain>/walker.js` aus. Neue Versionen erreichen die Websites
+Der Stack liefert auch `https://collect.<domain>/walker.js` aus. Neue Versionen erreichen die Websites
 damit über denselben Befehl, sie speichern die Datei bis zu einer Stunde im Cache.
 
 Nach jeder Änderung an `flow.json` oder `web/flow.web.json` müssen die Images neu gebaut werden, weil
@@ -45,7 +45,7 @@ Paketversionen in `flow.json` gemeinsam anpassen.
 # Container-Status, muss "healthy" sein
 docker inspect --format '{{.State.Health.Status}}' walkeros-walkerOS
 
-curl -X POST https://fury.shop-a.example/collect \
+curl -X POST https://collect.shop-a.example/collect \
   -H 'Origin: https://shop-a.example' \
   -H 'Content-Type: application/json' \
   -d '{"name":"page view","data":{"title":"Home"}}'

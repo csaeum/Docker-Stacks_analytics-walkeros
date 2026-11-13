@@ -216,8 +216,8 @@ jobs:
             exit 1
           fi
           # The collector URL must follow the requested host, the placeholder must not reach a browser.
-          docker exec "${WALKER_CONTAINER}" wget -q -O /tmp/walker.js --header 'Host: fury.example.test' http://127.0.0.1:8080/walker.js
-          docker exec "${WALKER_CONTAINER}" grep -qF 'https://fury.example.test/collect' /tmp/walker.js
+          docker exec "${WALKER_CONTAINER}" wget -q -O /tmp/walker.js --header 'Host: collect.example.test' http://127.0.0.1:8080/walker.js
+          docker exec "${WALKER_CONTAINER}" grep -qF 'https://collect.example.test/collect' /tmp/walker.js
           if docker exec "${WALKER_CONTAINER}" grep -qF 'collector-host.invalid' /tmp/walker.js; then
             echo "Platzhalter wurde nicht ersetzt"
             exit 1
