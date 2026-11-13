@@ -93,7 +93,54 @@
               "page": {
                 "view": {
                   "data": { "map": { "action_name": "data.title" } }
+                },
+                "scroll_25": { "data": { "map": { "e_c": { "value": "Scroll" }, "e_a": { "value": "depth" }, "e_v": { "value": 25 } } } },
+                "scroll_50": { "data": { "map": { "e_c": { "value": "Scroll" }, "e_a": { "value": "depth" }, "e_v": { "value": 50 } } } },
+                "scroll_75": { "data": { "map": { "e_c": { "value": "Scroll" }, "e_a": { "value": "depth" }, "e_v": { "value": 75 } } } },
+                "scroll_100": { "data": { "map": { "e_c": { "value": "Scroll" }, "e_a": { "value": "depth" }, "e_v": { "value": 100 } } } },
+                "engaged_15": { "data": { "map": { "e_c": { "value": "Engagement" }, "e_a": { "value": "seconds" }, "e_v": { "value": 15 } } } },
+                "engaged_30": { "data": { "map": { "e_c": { "value": "Engagement" }, "e_a": { "value": "seconds" }, "e_v": { "value": 30 } } } },
+                "engaged_60": { "data": { "map": { "e_c": { "value": "Engagement" }, "e_a": { "value": "seconds" }, "e_v": { "value": 60 } } } }
+              },
+              "search": {
+                "view": { "data": { "map": { "e_c": { "value": "Search" }, "e_a": { "value": "query" }, "e_n": "data.term" } } }
+              },
+              "file": {
+                "download": {
+                  "data": { "map": { "e_c": { "value": "Download" }, "e_a": { "key": "data.type", "value": "file" }, "e_n": "data.name" } }
                 }
+              },
+              "link": {
+                "outbound": {
+                  "data": { "map": { "link": { "fn": "$code:(event) => event.data && event.data.host ? 'https://' + event.data.host : undefined" } } }
+                }
+              },
+              "contact": {
+                "click": { "data": { "map": { "e_c": { "value": "Contact" }, "e_a": { "key": "data.kind", "value": "click" } } } }
+              },
+              "cta": {
+                "click": { "data": { "map": { "e_c": { "value": "CTA" }, "e_a": { "value": "click" }, "e_n": "data.name" } } }
+              },
+              "teaser": {
+                "click": { "data": { "map": { "e_c": { "value": "Teaser" }, "e_a": { "value": "click" }, "e_n": "data.name" } } },
+                "visible": { "data": { "map": { "e_c": { "value": "Teaser" }, "e_a": { "value": "visible" }, "e_n": "data.name" } } }
+              },
+              "accordion": {
+                "toggle": { "data": { "map": { "e_c": { "value": "Accordion" }, "e_a": { "value": "toggle" }, "e_n": "data.name" } } }
+              },
+              "share": {
+                "click": { "data": { "map": { "e_c": { "value": "Share" }, "e_a": { "value": "click" } } } }
+              },
+              "form": {
+                "submit": { "data": { "map": { "e_c": { "value": "Form" }, "e_a": { "value": "submit" } } } }
+              },
+              "newsletter": {
+                "signup": { "data": { "map": { "e_c": { "value": "Newsletter" }, "e_a": { "value": "signup" } } } }
+              },
+              "video": {
+                "start": { "data": { "map": { "e_c": { "value": "Video" }, "e_a": { "value": "start" }, "e_n": { "fn": "$code:(event) => event.data ? event.data.provider + ':' + event.data.id : undefined" } } } },
+                "progress": { "data": { "map": { "e_c": { "value": "Video" }, "e_a": { "value": "progress" }, "e_n": { "fn": "$code:(event) => event.data ? event.data.provider + ':' + event.data.id : undefined" }, "e_v": "data.percent" } } },
+                "complete": { "data": { "map": { "e_c": { "value": "Video" }, "e_a": { "value": "complete" }, "e_n": { "fn": "$code:(event) => event.data ? event.data.provider + ':' + event.data.id : undefined" } } } }
               },
               "*": {
                 "*": { "ignore": true }

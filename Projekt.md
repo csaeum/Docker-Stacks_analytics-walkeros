@@ -44,9 +44,39 @@ Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`
 
 | Ziel | Weg | Stand |
 |---|---|---|
-| Matomo | `@walkeros/server-destination-api` mit `before`-Transformer | live mit `idSite=12` geprüft (nur `page view` von `web-seo-consulting.eu`) |
+| Matomo | `@walkeros/server-destination-api` mit `before`-Transformer | `page view` live mit `idSite=12` geprüft (`web-seo-consulting.eu`); alle Events des Sulu-Bundles gemappt (siehe unten), lokal gegen eine Matomo-Attrappe geprüft, live offen |
 | Meta (Facebook, Instagram) | `@walkeros/server-destination-meta` | Auswahl des Pixels je Domain geprüft, echte Konten offen |
 | Pinterest | `@walkeros/server-destination-pinterest` | ungetestet, Auswahl je Domain nur mit dem API-Paket geprüft |
+
+### Event-Mapping für Matomo
+
+Die Events kommen aus dem Sulu-Bundle `wsc_sulubundle_walkeros` (verbindlich ist dessen `docs/events.md`).
+Das Matomo-Ziel bekommt sie nur mit `consent.analytics`. Alles, was nicht in der Tabelle steht (`user data`,
+`session start`, Shop-Events), wird für Matomo verworfen.
+
+| Event | Matomo-Anfrage |
+|---|---|
+| `page view` | Seitenaufruf mit `action_name` (Titel) |
+| `search view` | Ereignis `Search` / `query` / Suchbegriff |
+| `file download` | Ereignis `Download` / Dateityp (ohne Typ `file`) / Dateiname |
+| `link outbound` | Outlink `link=https://<host>` (nur der Host, Pfad und Query fehlen schon im Event) |
+| `contact click` | Ereignis `Contact` / `mail` bzw. `tel` |
+| `cta click` | Ereignis `CTA` / `click` / Name |
+| `teaser click`, `teaser visible` | Ereignis `Teaser` / `click` bzw. `visible` / Name |
+| `accordion toggle` | Ereignis `Accordion` / `toggle` / Name |
+| `share click` | Ereignis `Share` / `click` |
+| `form submit` | Ereignis `Form` / `submit` (ohne Feldinhalte) |
+| `newsletter signup` | Ereignis `Newsletter` / `signup` |
+| `video start`, `progress`, `complete` | Ereignis `Video` / `start`, `progress`, `complete` / `<Anbieter>:<ID>`, bei `progress` mit dem Prozentwert als Wert |
+| `page scroll_25` bis `scroll_100` | Ereignis `Scroll` / `depth` / Wert 25 bis 100 |
+| `page engaged_15`, `engaged_30`, `engaged_60` | Ereignis `Engagement` / `seconds` / Wert 15, 30, 60 |
+
+- **Die Suche ist ein Ereignis und kein Matomo-Site-Search.** Eine Anfrage mit `search=` zählt Matomo selbst als
+  Seitenaufruf. Zusammen mit dem `page view` der Ergebnisseite würde jede Suche zwei Aufrufe ergeben und die
+  Zahlen um mehr als die erlaubten 5 % verfälschen. Der Bericht „Site Search“ in Matomo bleibt dadurch leer,
+  die Suchbegriffe stehen unter „Ereignisse“.
+- **Downloads sind Ereignisse und kein Matomo-Download.** Der Download-Bericht braucht die vollständige Adresse der
+  Datei, das Event trägt nur Name, Typ und ID.
 
 ## Entscheidungen
 
