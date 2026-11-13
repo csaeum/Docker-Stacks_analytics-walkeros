@@ -3,7 +3,8 @@
   Test only, replaces the consent tool until cookieconsent is connected.
   Loads walker.js only in a browser with the cookie wk_test=1, so regular visitors get neither
   the script nor an event. Whoever sets the cookie gives their own consent. Never use it live.
-  The collector host follows from the website address: example.com loads from fury.example.com.
+  The collector host follows from the website address: example.com loads from collect.example.com.
+  Another subdomain prefix: set window.wkCollectorPrefix = "name." before this script.
   Set the cookie in the browser console: document.cookie = "wk_test=1; path=/; max-age=86400; secure"
 -->
 <script>
@@ -16,7 +17,7 @@
     window.elb('walker consent', { analytics: true });
     var script = document.createElement('script');
     script.async = true;
-    script.src = 'https://fury.' + location.hostname + '/walker.js';
+    script.src = 'https://' + (window.wkCollectorPrefix || 'collect.') + location.hostname + '/walker.js';
     document.head.appendChild(script);
   })();
 </script>

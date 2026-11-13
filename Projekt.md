@@ -10,7 +10,7 @@ bleibt für Google Ads, bis das ebenfalls umgezogen ist; dieselbe GA4-Property d
 
 ```
 Browser                                       Server (dieser Stack)
-walker.js ── Events an fury.<domain>/collect ──► Traefik ──► walkeros/flow (Port 8080)
+walker.js ── Events an collect.<domain>/collect ──► Traefik ──► walkeros/flow (Port 8080)
                                     (Host, Origin-Liste,      ├─► Matomo Tracking API
                                      Rate-Limit)              ├─► Meta Conversions API
 Shop-Backend ── Käufe mit Token (Issue #1) ──►                └─► Pinterest API
@@ -20,7 +20,7 @@ GTM-Loader ── nur noch Google Ads ──► GTM-Stack (getrennt)
 
 - **Server-Flow:** `flow.json` wird mit `@walkeros/cli` gebaut (Node.js ≥ 22.12). Das Image
   `walkeros/flow` führt nur fertige Bundles aus und lehnt eine `flow.json` ab.
-- **Web-Flow:** Der Dienst `walker` liefert `https://fury.<domain>/walker.js` aus `web/flow.web.json` aus.
+- **Web-Flow:** Der Dienst `walker` liefert `https://collect.<domain>/walker.js` aus `web/flow.web.json` aus.
   Es gibt ein Bundle für alle Domains, nginx setzt beim Ausliefern den aufgerufenen Host als Collector ein.
   Websites binden nur das Skript ein und kopieren keine Datei. `web/test-loader.html` lädt es zum Testen
   nur mit Test-Cookie.
@@ -31,12 +31,12 @@ GTM-Loader ── nur noch Google Ads ──► GTM-Stack (getrennt)
 
 | Collector | Website | Stand |
 |---|---|---|
-| `fury.shop-a.example` | `https://shop-a.example` | zuerst testen |
-| `fury.shop-b.example` | `https://shop-b.example` | zuerst testen |
-| `fury.shop-c.example` | `https://shop-c.example` | Shop im Wartungsmodus |
-| `fury.web-seo-consulting.eu` | `https://web-seo-consulting.eu` | bereit |
-| `fury.site-e.example` | `https://site-e.example` | bereit |
-| `fury.shop-d.example` | `https://shop-d.example` | bereit |
+| `collect.shop-a.example` | `https://shop-a.example` | zuerst testen |
+| `collect.shop-b.example` | `https://shop-b.example` | zuerst testen |
+| `collect.shop-c.example` | `https://shop-c.example` | Shop im Wartungsmodus |
+| `collect.web-seo-consulting.eu` | `https://web-seo-consulting.eu` | bereit |
+| `collect.site-e.example` | `https://site-e.example` | bereit |
+| `collect.shop-d.example` | `https://shop-d.example` | bereit |
 
 Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`.
 
