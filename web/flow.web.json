@@ -20,6 +20,12 @@
             },
             "@walkeros/web-destination-gtag": {
               "version": "4.9.0"
+            },
+            "@walkeros/web-destination-meta": {
+              "version": "4.9.0"
+            },
+            "@walkeros/web-destination-pinterest": {
+              "version": "4.9.0"
             }
           }
         }
@@ -457,6 +463,313 @@
             }
           },
           "before": "ga4Enabled"
+        },
+        "meta": {
+          "package": "@walkeros/web-destination-meta",
+          "config": {
+            "consent": {
+              "meta": true
+            },
+            "loadScript": true,
+            "settings": {
+              "pixelId": "9990000000001"
+            },
+            "mapping": {
+              "page": {
+                "view": {
+                  "name": "PageView"
+                }
+              },
+              "product": {
+                "view": {
+                  "name": "ViewContent",
+                  "data": {
+                    "map": {
+                      "content_type": {
+                        "value": "product"
+                      },
+                      "contents": {
+                        "set": [
+                          {
+                            "map": {
+                              "id": "data.id",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": {
+                        "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                      }
+                    }
+                  }
+                },
+                "add": {
+                  "name": "AddToCart",
+                  "data": {
+                    "map": {
+                      "content_type": {
+                        "value": "product"
+                      },
+                      "contents": {
+                        "set": [
+                          {
+                            "map": {
+                              "id": "data.id",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": {
+                        "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                      }
+                    }
+                  }
+                }
+              },
+              "order": {
+                "start": {
+                  "name": "InitiateCheckout",
+                  "data": {
+                    "map": {
+                      "content_type": {
+                        "value": "product"
+                      },
+                      "contents": {
+                        "loop": [
+                          "nested",
+                          {
+                            "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
+                            "map": {
+                              "id": "data.id",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "num_items": {
+                        "fn": "$code:(event) => Array.isArray(event.nested) ? event.nested.filter((n) => n && n.entity === \"product\").length : 0"
+                      },
+                      "value": "data.value"
+                    }
+                  }
+                },
+                "complete": {
+                  "name": "Purchase",
+                  "data": {
+                    "map": {
+                      "content_type": {
+                        "value": "product"
+                      },
+                      "contents": {
+                        "loop": [
+                          "nested",
+                          {
+                            "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
+                            "map": {
+                              "id": "data.id",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "num_items": {
+                        "fn": "$code:(event) => Array.isArray(event.nested) ? event.nested.filter((n) => n && n.entity === \"product\").length : 0"
+                      },
+                      "value": "data.value"
+                    }
+                  }
+                }
+              },
+              "checkout": {
+                "step": {
+                  "name": "AddPaymentInfo",
+                  "condition": "$code:(event) => !!event.data && event.data.step === \"payment\"",
+                  "data": {
+                    "map": {
+                      "content_type": {
+                        "value": "product"
+                      },
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": "data.value"
+                    }
+                  }
+                }
+              },
+              "*": {
+                "*": {
+                  "ignore": true
+                }
+              }
+            }
+          }
+        },
+        "pinterest": {
+          "package": "@walkeros/web-destination-pinterest",
+          "config": {
+            "consent": {
+              "pinterest": true
+            },
+            "settings": {
+              "apiKey": "9990000000002"
+            },
+            "mapping": {
+              "page": {
+                "view": {
+                  "ignore": true
+                }
+              },
+              "product": {
+                "view": {
+                  "name": "pagevisit",
+                  "data": {
+                    "map": {
+                      "value": "data.price",
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "line_items": {
+                        "set": [
+                          {
+                            "map": {
+                              "product_id": "data.id",
+                              "product_name": "data.name",
+                              "product_price": "data.price",
+                              "product_quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "add": {
+                  "name": "addtocart",
+                  "data": {
+                    "map": {
+                      "value": {
+                        "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                      },
+                      "order_quantity": {
+                        "key": "data.quantity",
+                        "value": 1
+                      },
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "line_items": {
+                        "set": [
+                          {
+                            "map": {
+                              "product_id": "data.id",
+                              "product_name": "data.name",
+                              "product_price": "data.price",
+                              "product_quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "list": {
+                "view": {
+                  "name": "viewcategory",
+                  "data": {
+                    "map": {
+                      "line_items": {
+                        "set": [
+                          {
+                            "map": {
+                              "product_category": "data.name"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "order": {
+                "complete": {
+                  "name": "checkout",
+                  "data": {
+                    "map": {
+                      "value": "data.value",
+                      "order_id": "data.id",
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "line_items": {
+                        "loop": [
+                          "nested",
+                          {
+                            "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
+                            "map": {
+                              "product_id": "data.id",
+                              "product_name": "data.name",
+                              "product_price": "data.price",
+                              "product_quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "*": {
+                "*": {
+                  "ignore": true
+                }
+              }
+            }
+          }
         }
       }
     }
