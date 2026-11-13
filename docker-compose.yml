@@ -46,6 +46,7 @@ services:
       context: ./web
       args:
         WALKEROS_VERSION: ${WALKEROS_VERSION}
+        GA4_MEASUREMENT_ID: ${GA4_MEASUREMENT_ID:-G-XXXXXXXXXX}
     image: ${COMPOSE_PROJECT_NAME}-walker:${WALKEROS_VERSION}
     container_name: ${COMPOSE_PROJECT_NAME}-walker
     healthcheck:

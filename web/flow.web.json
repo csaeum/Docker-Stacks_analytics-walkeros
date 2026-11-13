@@ -6,10 +6,21 @@
         "platform": "web",
         "bundle": {
           "packages": {
-            "@walkeros/collector": { "version": "4.9.0" },
-            "@walkeros/web-source-browser": { "version": "4.9.0" },
-            "@walkeros/web-source-session": { "version": "4.9.0" },
-            "@walkeros/web-destination-api": { "version": "4.9.0" }
+            "@walkeros/collector": {
+              "version": "4.9.0"
+            },
+            "@walkeros/web-source-browser": {
+              "version": "4.9.0"
+            },
+            "@walkeros/web-source-session": {
+              "version": "4.9.0"
+            },
+            "@walkeros/web-destination-api": {
+              "version": "4.9.0"
+            },
+            "@walkeros/web-destination-gtag": {
+              "version": "4.9.0"
+            }
           }
         }
       },
@@ -18,7 +29,9 @@
           "package": "@walkeros/web-source-browser",
           "primary": true,
           "config": {
-            "settings": { "pageview": true }
+            "settings": {
+              "pageview": true
+            }
           }
         },
         "session": {
@@ -28,7 +41,10 @@
               "storage": true,
               "deviceStorage": "cookie",
               "deviceAge": 30,
-              "consent": ["analytics", "marketing"]
+              "consent": [
+                "analytics",
+                "marketing"
+              ]
             }
           }
         }
@@ -46,10 +62,392 @@
           "package": "@walkeros/web-destination-api",
           "before": "deviceContext",
           "config": {
-            "consent": { "analytics": true, "marketing": true },
+            "consent": {
+              "analytics": true,
+              "marketing": true
+            },
             "settings": {
               "url": "https://collector-host.invalid/collect",
               "transport": "beacon"
+            }
+          }
+        },
+        "ga4": {
+          "package": "@walkeros/web-destination-gtag",
+          "config": {
+            "consent": {
+              "analytics": true
+            },
+            "loadScript": true,
+            "settings": {
+              "ga4": {
+                "measurementId": "G-XXXXXXXXXX",
+                "pageview": false,
+                "snakeCase": true
+              }
+            },
+            "mapping": {
+              "product": {
+                "view": {
+                  "name": "view_item",
+                  "data": {
+                    "map": {
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": "data.price",
+                      "items": {
+                        "loop": [
+                          "this",
+                          {
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "click": {
+                  "name": "select_item",
+                  "data": {
+                    "map": {
+                      "items": {
+                        "loop": [
+                          "this",
+                          {
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "add": {
+                  "name": "add_to_cart",
+                  "data": {
+                    "map": {
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": "data.price",
+                      "items": {
+                        "loop": [
+                          "this",
+                          {
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "remove": {
+                  "name": "remove_from_cart",
+                  "data": {
+                    "map": {
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": "data.price",
+                      "items": {
+                        "loop": [
+                          "this",
+                          {
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "list": {
+                "view": {
+                  "name": "view_item_list",
+                  "data": {
+                    "map": {
+                      "item_list_name": "data.name"
+                    }
+                  }
+                }
+              },
+              "cart": {
+                "view": {
+                  "name": "view_cart",
+                  "data": {
+                    "map": {
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": "data.value",
+                      "items": {
+                        "loop": [
+                          "nested",
+                          {
+                            "condition": {
+                              "$code": "e=>\"object\"==typeof e&&null!==e&&\"entity\"in e&&\"product\"===e.entity"
+                            },
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "checkout": {
+                  "ignore": true
+                }
+              },
+              "order": {
+                "start": {
+                  "name": "begin_checkout",
+                  "data": {
+                    "map": {
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": "data.value",
+                      "items": {
+                        "loop": [
+                          "nested",
+                          {
+                            "condition": {
+                              "$code": "e=>\"object\"==typeof e&&null!==e&&\"entity\"in e&&\"product\"===e.entity"
+                            },
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "complete": {
+                  "name": "purchase",
+                  "data": {
+                    "map": {
+                      "currency": {
+                        "key": "data.currency",
+                        "value": "EUR"
+                      },
+                      "value": "data.value",
+                      "items": {
+                        "loop": [
+                          "nested",
+                          {
+                            "condition": {
+                              "$code": "e=>\"object\"==typeof e&&null!==e&&\"entity\"in e&&\"product\"===e.entity"
+                            },
+                            "map": {
+                              "item_id": "data.id",
+                              "item_name": "data.name",
+                              "item_variant": "data.variant",
+                              "item_category": "data.category",
+                              "price": "data.price",
+                              "quantity": {
+                                "key": "data.quantity",
+                                "value": 1
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "transaction_id": "data.id",
+                      "tax": "data.tax",
+                      "shipping": "data.shipping",
+                      "coupon": "data.coupon"
+                    }
+                  }
+                }
+              },
+              "checkout": {
+                "step": {
+                  "ignore": true
+                }
+              },
+              "search": {
+                "view": {
+                  "name": "search",
+                  "data": {
+                    "map": {
+                      "search_term": "data.term"
+                    }
+                  }
+                }
+              },
+              "file": {
+                "download": {
+                  "name": "file_download",
+                  "data": {
+                    "map": {
+                      "file_name": "data.name",
+                      "file_extension": "data.type"
+                    }
+                  }
+                }
+              },
+              "link": {
+                "outbound": {
+                  "name": "outbound_click",
+                  "data": {
+                    "map": {
+                      "link_domain": "data.host"
+                    }
+                  }
+                }
+              },
+              "contact": {
+                "click": {
+                  "name": "contact_click",
+                  "data": {
+                    "map": {
+                      "kind": "data.kind"
+                    }
+                  }
+                }
+              },
+              "cta": {
+                "click": {
+                  "name": "cta_click",
+                  "data": {
+                    "map": {
+                      "name": "data.name"
+                    }
+                  }
+                }
+              },
+              "teaser": {
+                "click": {
+                  "name": "teaser_click",
+                  "data": {
+                    "map": {
+                      "name": "data.name"
+                    }
+                  }
+                },
+                "visible": {
+                  "name": "teaser_visible",
+                  "data": {
+                    "map": {
+                      "name": "data.name"
+                    }
+                  }
+                }
+              },
+              "accordion": {
+                "toggle": {
+                  "name": "accordion_toggle",
+                  "data": {
+                    "map": {
+                      "name": "data.name"
+                    }
+                  }
+                }
+              },
+              "video": {
+                "start": {
+                  "name": "video_start",
+                  "data": {
+                    "map": {
+                      "provider": "data.provider",
+                      "video_id": "data.id"
+                    }
+                  }
+                },
+                "progress": {
+                  "name": "video_progress",
+                  "data": {
+                    "map": {
+                      "provider": "data.provider",
+                      "video_id": "data.id",
+                      "video_percent": "data.percent"
+                    }
+                  }
+                },
+                "complete": {
+                  "name": "video_complete",
+                  "data": {
+                    "map": {
+                      "provider": "data.provider",
+                      "video_id": "data.id"
+                    }
+                  }
+                }
+              },
+              "user": {
+                "data": {
+                  "ignore": true
+                }
+              },
+              "session": {
+                "start": {
+                  "ignore": true
+                }
+              }
             }
           }
         }
