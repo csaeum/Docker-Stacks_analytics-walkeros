@@ -46,8 +46,8 @@ Die Collector-Hosts stehen in `HOSTRULE`, die Websites in `ALLOWED_ORIGIN_REGEX`
 |---|---|---|
 | Matomo | `@walkeros/server-destination-api` mit `before`-Transformer `requestContext` (Herkunftsprüfung, IP, User-Agent) | `page view` live mit `idSite=12` geprüft (`web-seo-consulting.eu`); alle Events des Sulu-Bundles gemappt (siehe unten), lokal gegen eine Matomo-Attrappe geprüft, live offen |
 | GA4 | `@walkeros/web-destination-gtag` im Browser, Mess-ID je Website über die Adresse `walker.js?ga4=G-…` (nginx setzt sie ein, Platzhalter im Repo), Einwilligungsschlüssel `ga4`, Consent Mode v2 | lokal im Echtlauf geprüft (Realtime), live offen |
-| Meta (Facebook, Instagram) | `@walkeros/server-destination-meta` | Auswahl des Pixels je Domain geprüft, echte Konten offen |
-| Pinterest | `@walkeros/server-destination-pinterest` | ungetestet, Auswahl je Domain nur mit dem API-Paket geprüft |
+| Meta (Facebook, Instagram) | Browser: `@walkeros/web-destination-meta` (Pixel-ID je Website über `walker.js?meta=`, Schlüssel `meta`); Server: `@walkeros/server-destination-meta` (Conversions API, Konto per `Origin`, Token per `$env`, Details `docs/capi.md`) | Browser und Server lokal geprüft (Attrappe), echte Konten offen |
+| Pinterest | Browser: `@walkeros/web-destination-pinterest` (Tag-ID über `walker.js?pinterest=`, Schlüssel `pinterest`); Server: `@walkeros/server-destination-pinterest` (Konto per `Origin`, Token per `$env`, `docs/capi.md`) | Browser und Server lokal geprüft (Attrappe), echte Konten offen |
 
 ### Event-Mapping für Matomo
 

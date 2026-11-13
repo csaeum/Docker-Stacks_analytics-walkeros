@@ -55,6 +55,19 @@ und ohne `analytics`-Einwilligung erreichen Matomo nicht.
 - Der Build der `flow.json` kann scheitern, ohne dass `lokal.sh` das deutlich zeigt: bei Fehlern
   `docker compose … build walkeros` einzeln ausführen.
 
+## Meta und Pinterest serverseitig (Attrappe)
+
+`lokal/lokal.sh up` setzt in `lokal/env.lokal` Origin, Pixel-ID, Ad-Account und Fake-Tokens und lenkt die Aufrufe auf `http://capi-mock:9000`.
+Die Attrappe `lokal/capi-mock.js` einmal starten und ihre Ausgabe lesen:
+
+```bash
+docker run -d --name capi-mock --network walkeros-lokal -v "$PWD/lokal/capi-mock.js:/m.js:ro" node:22-alpine node /m.js
+docker logs capi-mock      # eine JSON-Zeile je Anfrage an Meta (/meta/…) und Pinterest (/pinterest/…)
+```
+
+Echte Aufrufe lokal: in `.env.lokal.local` `META_1_URL=`/`PINTEREST_1_URL=` auf die Standardadressen setzen (Zeile ohne Wert reicht nicht, die
+echten Adressen eintragen), echte Token und `META_1_TEST_EVENT_CODE` bzw. `PINTEREST_1_TEST=true` ergänzen, siehe `docs/capi.md`.
+
 ## Später: Sylius
 
 Der Shop-Teil (Bundle `wsc_syliusbundle_walkeros`, Shop-Übergang #24/#6 mit der Geräte-Kennung aus Stack #11) kommt

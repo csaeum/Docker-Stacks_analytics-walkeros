@@ -3,6 +3,10 @@
 # Aufruf ueber lokal/lokal.sh, Beschreibung in docs/lokal.md.
 services:
   walkeros:
+    environment:
+      # Endpoints of the mock (lokal/capi-mock.js); production never sets these, the real APIs are the default
+      META_1_URL: ${META_1_URL}
+      PINTEREST_1_URL: ${PINTEREST_1_URL}
     ports:
       - "127.0.0.1:18080:8080"
     networks:

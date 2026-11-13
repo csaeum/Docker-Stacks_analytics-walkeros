@@ -14,6 +14,17 @@ services:
       MATOMO_TOKEN_AUTH: ${MATOMO_TOKEN_AUTH:-}
       # Website whose events go to Matomo (site 12); other origins are dropped by the matomoSites transformer
       MATOMO_ORIGIN: ${MATOMO_ORIGIN:-https://web-seo-consulting.eu}
+      # Server-side Meta Conversions API (account 1). Tokens only in .env.local; without ORIGIN, PIXEL_ID and ACCESS_TOKEN nothing is sent.
+      # ORIGIN: websites of this account, comma-separated (Origin header). Another account = copy the block in flow.json and use _2.
+      META_1_ORIGIN: ${META_1_ORIGIN:-}
+      META_1_PIXEL_ID: ${META_1_PIXEL_ID:-}
+      META_1_ACCESS_TOKEN: ${META_1_ACCESS_TOKEN:-}
+      META_1_TEST_EVENT_CODE: ${META_1_TEST_EVENT_CODE:-}
+      # Server-side Pinterest Conversions API (account 1). PINTEREST_1_TEST=true sends to the test endpoint (nothing is recorded).
+      PINTEREST_1_ORIGIN: ${PINTEREST_1_ORIGIN:-}
+      PINTEREST_1_AD_ACCOUNT_ID: ${PINTEREST_1_AD_ACCOUNT_ID:-}
+      PINTEREST_1_ACCESS_TOKEN: ${PINTEREST_1_ACCESS_TOKEN:-}
+      PINTEREST_1_TEST: ${PINTEREST_1_TEST:-}
     labels:
       - autoheal=true
       - autoheal.stop.timeout=10

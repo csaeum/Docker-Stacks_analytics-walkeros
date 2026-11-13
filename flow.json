@@ -9,7 +9,9 @@
             "@walkeros/collector": { "version": "4.9.0" },
             "@walkeros/server-source-express": { "version": "4.9.0" },
             "@walkeros/destination-demo": { "version": "4.9.0" },
-            "@walkeros/server-destination-api": { "version": "4.9.0" }
+            "@walkeros/server-destination-api": { "version": "4.9.0" },
+            "@walkeros/server-destination-meta": { "version": "4.9.0" },
+            "@walkeros/server-destination-pinterest": { "version": "4.9.0" }
           }
         }
       },
@@ -24,7 +26,8 @@
               "map": {
                 "ip": "headers.x-real-ip",
                 "userAgent": "headers.user-agent",
-                "origin": "headers.origin"
+                "origin": "headers.origin",
+                "cookie": "headers.cookie"
               }
             }
           }
@@ -35,6 +38,18 @@
           "code": {
             "type": "requestContext",
             "push": "$code:(event, context) => { const origin = process.env.MATOMO_ORIGIN; const ingest = (context && context.ingest) || {}; if (!origin || ingest.origin !== origin) { return false; } return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent } } }; }"
+          }
+        },
+        "meta1Context": {
+          "code": {
+            "type": "meta1Context",
+            "push": "$code:(event, context) => { const origins = (process.env.META_1_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean); const ingest = (context && context.ingest) || {}; if (!origins.includes(ingest.origin)) { return false; } const found = {}; String(ingest.cookie || '').split(';').forEach((part) => { const pair = part.trim(); const i = pair.indexOf('='); if (i > 0 && pair.slice(0, i) === '_fbp' || pair.slice(0, i) === '_fbc') { found[pair.slice(0, i)] = pair.slice(i + 1); } }); return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent, fbp: found._fbp, fbc: found._fbc } } }; }"
+          }
+        },
+        "pinterest1Context": {
+          "code": {
+            "type": "pinterest1Context",
+            "push": "$code:(event, context) => { const origins = (process.env.PINTEREST_1_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean); const ingest = (context && context.ingest) || {}; if (!origins.includes(ingest.origin)) { return false; } const found = {}; String(ingest.cookie || '').split(';').forEach((part) => { const pair = part.trim(); const i = pair.indexOf('='); if (i > 0 && pair.slice(0, i) === '_epik') { found[pair.slice(0, i)] = pair.slice(i + 1); } }); return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent, epik: found._epik } } }; }"
           }
         }
       },
@@ -133,6 +148,385 @@
               },
               "*": {
                 "*": { "ignore": true }
+              }
+            }
+          }
+        },
+        "meta1": {
+          "package": "@walkeros/server-destination-meta",
+          "before": "meta1Context",
+          "config": {
+            "consent": {
+              "meta": true
+            },
+            "settings": {
+              "accessToken": "$env.META_1_ACCESS_TOKEN:",
+              "pixelId": "$env.META_1_PIXEL_ID:",
+              "test_event_code": "$env.META_1_TEST_EVENT_CODE:",
+              "url": "$env.META_1_URL:https://graph.facebook.com/v22.0/",
+              "user_data": {
+                "fbp": "user.fbp",
+                "fbc": "user.fbc"
+              }
+            },
+            "mapping": {
+              "page": {
+                "view": {
+                  "data": {
+                    "map": {
+                      "event_name": {
+                        "value": "PageView"
+                      }
+                    }
+                  }
+                }
+              },
+              "product": {
+                "view": {
+                  "data": {
+                    "map": {
+                      "event_name": {
+                        "value": "ViewContent"
+                      },
+                      "custom_data": {
+                        "map": {
+                          "content_type": {
+                            "value": "product"
+                          },
+                          "contents": {
+                            "set": [
+                              {
+                                "map": {
+                                  "id": "data.id",
+                                  "quantity": {
+                                    "key": "data.quantity",
+                                    "value": 1
+                                  },
+                                  "item_price": "data.price"
+                                }
+                              }
+                            ]
+                          },
+                          "currency": {
+                            "key": "data.currency",
+                            "value": "EUR"
+                          },
+                          "value": {
+                            "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "add": {
+                  "data": {
+                    "map": {
+                      "event_name": {
+                        "value": "AddToCart"
+                      },
+                      "custom_data": {
+                        "map": {
+                          "content_type": {
+                            "value": "product"
+                          },
+                          "contents": {
+                            "set": [
+                              {
+                                "map": {
+                                  "id": "data.id",
+                                  "quantity": {
+                                    "key": "data.quantity",
+                                    "value": 1
+                                  },
+                                  "item_price": "data.price"
+                                }
+                              }
+                            ]
+                          },
+                          "currency": {
+                            "key": "data.currency",
+                            "value": "EUR"
+                          },
+                          "value": {
+                            "fn": "$code:(event) => { const d = event.data || {}; return typeof d.price === \"number\" ? Math.round(d.price * (d.quantity || 1) * 100) / 100 : undefined; }"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "order": {
+                "start": {
+                  "data": {
+                    "map": {
+                      "event_name": {
+                        "value": "InitiateCheckout"
+                      },
+                      "custom_data": {
+                        "map": {
+                          "content_type": {
+                            "value": "product"
+                          },
+                          "contents": {
+                            "loop": [
+                              "nested",
+                              {
+                                "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
+                                "map": {
+                                  "id": "data.id",
+                                  "quantity": {
+                                    "key": "data.quantity",
+                                    "value": 1
+                                  },
+                                  "item_price": "data.price"
+                                }
+                              }
+                            ]
+                          },
+                          "currency": {
+                            "key": "data.currency",
+                            "value": "EUR"
+                          },
+                          "num_items": {
+                            "fn": "$code:(event) => Array.isArray(event.nested) ? event.nested.filter((n) => n && n.entity === \"product\").length : 0"
+                          },
+                          "value": "data.value"
+                        }
+                      }
+                    }
+                  }
+                },
+                "complete": {
+                  "data": {
+                    "map": {
+                      "event_name": {
+                        "value": "Purchase"
+                      },
+                      "custom_data": {
+                        "map": {
+                          "content_type": {
+                            "value": "product"
+                          },
+                          "contents": {
+                            "loop": [
+                              "nested",
+                              {
+                                "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
+                                "map": {
+                                  "id": "data.id",
+                                  "quantity": {
+                                    "key": "data.quantity",
+                                    "value": 1
+                                  },
+                                  "item_price": "data.price"
+                                }
+                              }
+                            ]
+                          },
+                          "currency": {
+                            "key": "data.currency",
+                            "value": "EUR"
+                          },
+                          "num_items": {
+                            "fn": "$code:(event) => Array.isArray(event.nested) ? event.nested.filter((n) => n && n.entity === \"product\").length : 0"
+                          },
+                          "value": "data.value",
+                          "order_id": "data.id"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "checkout": {
+                "step": {
+                  "data": {
+                    "map": {
+                      "event_name": {
+                        "value": "AddPaymentInfo"
+                      },
+                      "custom_data": {
+                        "map": {
+                          "content_type": {
+                            "value": "product"
+                          },
+                          "currency": {
+                            "key": "data.currency",
+                            "value": "EUR"
+                          },
+                          "value": "data.value"
+                        }
+                      }
+                    }
+                  },
+                  "condition": "$code:(event) => !!event.data && event.data.step === \"payment\""
+                }
+              },
+              "*": {
+                "*": {
+                  "ignore": true
+                }
+              }
+            }
+          }
+        },
+        "pinterest1": {
+          "package": "@walkeros/server-destination-pinterest",
+          "before": "pinterest1Context",
+          "config": {
+            "consent": {
+              "pinterest": true
+            },
+            "settings": {
+              "accessToken": "$env.PINTEREST_1_ACCESS_TOKEN:",
+              "adAccountId": "$env.PINTEREST_1_AD_ACCOUNT_ID:",
+              "test": "$env.PINTEREST_1_TEST:",
+              "url": "$env.PINTEREST_1_URL:https://api.pinterest.com/v5/",
+              "user_data": {
+                "click_id": "user.epik"
+              }
+            },
+            "mapping": {
+              "page": {
+                "view": {
+                  "ignore": true
+                }
+              },
+              "product": {
+                "view": {
+                  "data": {
+                    "map": {
+                      "event_name": {
+                        "value": "page_visit"
+                      },
+                      "custom_data": {
+                        "map": {
+                          "currency": {
+                            "key": "data.currency",
+                            "value": "EUR"
+                          },
+                          "value": {
+                            "fn": "$code:(event) => { const d = event.data || {}; const v = typeof d.price === \"number\" ? d.price * (d.quantity || 1) : undefined; return typeof v === \"number\" ? v.toFixed(2) : undefined; }"
+                          },
+                          "contents": {
+                            "set": [
+                              {
+                                "map": {
+                                  "id": "data.id",
+                                  "quantity": {
+                                    "key": "data.quantity",
+                                    "value": 1
+                                  },
+                                  "item_price": {
+                                    "fn": "$code:(event) => typeof (event.data || {}).price === \"number\" ? event.data.price.toFixed(2) : undefined"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "add": {
+                  "data": {
+                    "map": {
+                      "event_name": {
+                        "value": "add_to_cart"
+                      },
+                      "custom_data": {
+                        "map": {
+                          "currency": {
+                            "key": "data.currency",
+                            "value": "EUR"
+                          },
+                          "value": {
+                            "fn": "$code:(event) => { const d = event.data || {}; const v = typeof d.price === \"number\" ? d.price * (d.quantity || 1) : undefined; return typeof v === \"number\" ? v.toFixed(2) : undefined; }"
+                          },
+                          "contents": {
+                            "set": [
+                              {
+                                "map": {
+                                  "id": "data.id",
+                                  "quantity": {
+                                    "key": "data.quantity",
+                                    "value": 1
+                                  },
+                                  "item_price": {
+                                    "fn": "$code:(event) => typeof (event.data || {}).price === \"number\" ? event.data.price.toFixed(2) : undefined"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "list": {
+                "view": {
+                  "data": {
+                    "map": {
+                      "event_name": {
+                        "value": "view_category"
+                      }
+                    }
+                  }
+                }
+              },
+              "order": {
+                "complete": {
+                  "data": {
+                    "map": {
+                      "event_name": {
+                        "value": "checkout"
+                      },
+                      "custom_data": {
+                        "map": {
+                          "currency": {
+                            "key": "data.currency",
+                            "value": "EUR"
+                          },
+                          "value": {
+                            "fn": "$code:(event) => typeof (event.data || {}).value === \"number\" ? event.data.value.toFixed(2) : undefined"
+                          },
+                          "order_id": "data.id",
+                          "num_items": {
+                            "fn": "$code:(event) => Array.isArray(event.nested) ? event.nested.filter((n) => n && n.entity === \"product\").length : 0"
+                          },
+                          "contents": {
+                            "loop": [
+                              "nested",
+                              {
+                                "condition": "$code:(e) => typeof e === \"object\" && e !== null && e.entity === \"product\"",
+                                "map": {
+                                  "id": "data.id",
+                                  "quantity": {
+                                    "key": "data.quantity",
+                                    "value": 1
+                                  },
+                                  "item_price": {
+                                    "fn": "$code:(event) => typeof (event.data || {}).price === \"number\" ? event.data.price.toFixed(2) : undefined"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "*": {
+                "*": {
+                  "ignore": true
+                }
               }
             }
           }
