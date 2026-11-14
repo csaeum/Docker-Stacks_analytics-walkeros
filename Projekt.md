@@ -103,7 +103,7 @@ Das Matomo-Ziel bekommt sie nur mit `consent.analytics`. Alles, was nicht in der
 - **`/collect` nimmt nur Browser-Anfragen von erlaubten Domains an.** Traefik prüft Host, `Origin` und
   Methode und begrenzt die Anfragen pro IP. `docker-compose.yml` klammert `HOSTRULE`, weil die
   Prüfungen sonst nur für den letzten Host gelten (getestet). Skripte können `Origin` fälschen, deshalb
-  sollen Käufe nur vom Shop-Backend kommen (Issue #1).
+  kommen Käufe über den eigenen Pfad `/purchase` nur vom Shop-Backend, mit Bearer-Token (Issue #1, `docs/capi.md`).
 
 ## Bewährung für Matomo
 

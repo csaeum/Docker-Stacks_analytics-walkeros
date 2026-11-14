@@ -53,6 +53,23 @@ Im Sulu-Admin je Webspace „Serverseitig senden“ einschalten und das Feld fü
 Cookies `_fbc` und `_epik` aus dem Klick auf der Eintrittsseite selbst (wie der Pixel es täte), damit die Kennung auch bei einem
 späteren Kauf noch da ist, sonst würde sie nur auf der Landeseite mitgehen.
 
+## Käufe vom Shop-Backend (`POST /purchase`)
+
+Das serverseitige `order complete` des Shops (Sylius: `docs/server-event.md` des Shop-Bundles) geht an einen eigenen Pfad, nicht an `/collect`:
+
+- **Token:** Der Shop sendet `Authorization: Bearer <PURCHASE_TOKEN>`. Der Wert steht nur in `.env.local` auf dem Server und im Shop. Die Prüfung
+  (`purchaseAuth` in `flow.json`) läuft in konstanter Zeit vor allem anderen. Ohne gesetztes `PURCHASE_TOKEN` antwortet der Pfad 503, mit falschem Token 401,
+  mit einem anderen Event als `order complete` oder ohne Bestell-ID 400.
+- **Kein Origin-Test:** Traefik prüft nur Host, Pfad und Methode (POST) und begrenzt die Anfragen pro IP. Die Zugangskontrolle ist das Token.
+- **Browser-Kauf zählt nicht:** Ein `order complete` über `/collect` (Browser) wird von Meta und Pinterest verworfen, sonst käme der Kauf doppelt an.
+  Für GA4 läuft der Kauf im Browser (kein Server-Ziel), den kann der Stack nicht unterdrücken.
+- **Matomo:** Auch Matomo bekommt den Kauf nur über diesen Pfad, als Ecommerce-Bestellung (`idgoal=0`, `ec_id`, `revenue`, `ec_st`, `ec_tx`, `ec_sh`, `ec_items`). Die Geräte-Kennung ergibt dieselbe Besucher-ID wie im Browser. Voraussetzung: In Matomo ist Ecommerce für die Site eingeschaltet, der Kauf bleibt sonst ohne Wirkung in den Ecommerce-Berichten. Ein `order complete` aus dem Browser wird auch hier verworfen. Matomo verwirft Aufrufe ohne User-Agent (Bot-Erkennung). Sendet der Shop kein `userAgent` (er tut das nur mit Marketing-Einwilligung und Serverweg), kommt der Kauf in Matomo nicht an.
+- **IP, User-Agent, `fbp`, `fbc`, `epik`** kommen auf diesem Pfad aus dem Event (der Shop kennt sie), nicht aus den Headern der Anfrage
+  (das wäre der Server des Shops). Meta und Pinterest lesen sie dafür aus `event.user.ip` und `event.user.userAgent` (Einstellungen `ip` und `userAgent`); der Standard der Ziele nimmt zuerst die Header der Anfrage und hätte auf `/purchase` die Adresse und den Agenten des Shop-Servers gesendet. Der Shop sendet sie nur mit Marketing-Einwilligung und eingeschaltetem Serverweg.
+- **Doppelte Bestellungen:** Der Stack merkt sich nichts. Sendet der Shop eine Bestellung erneut (etwa nach einem Fehler), entfernen die Ziele Doppelte selbst: Meta und Pinterest über `event_id` und `order_id`, Matomo über `ec_id`. Schlägt die Zustellung fehl, antwortet der Pfad mit 500 und der Shop kann es wiederholen.
+- **Antwortzeit:** Weil `/purchase` Fehler melden muss, wartet die Quelle bei POST auf die Zustellung (`async: false`). Das gilt auch für `/collect`; `walker.js` wartet nicht auf die Antwort.
+- **Ein Port:** Der Runner hängt nur eine Express-Quelle an Port 8080. Deshalb teilen sich `/collect` und `/purchase` eine Quelle, `purchaseAuth` greift nur bei `/purchase`.
+
 ## Konfiguration (`.env.local` auf dem Server, nie im Repo)
 
 ```
@@ -64,6 +81,7 @@ PINTEREST_1_ORIGIN=https://example.com
 PINTEREST_1_AD_ACCOUNT_ID=1234567890123
 PINTEREST_1_ACCESS_TOKEN=<Conversion-Token>
 PINTEREST_1_TEST=                  # true = Testendpunkt, nichts wird gespeichert
+PURCHASE_TOKEN=<langer Zufallswert>  # Kauf-Pfad, derselbe Wert im Shop (server_token)
 ```
 
 Läuft der Pixel zusätzlich im Browser, muss `META_1_PIXEL_ID` dieselbe ID sein wie im Sulu-Admin, sonst landen Browser- und Server-Event

@@ -197,6 +197,8 @@ jobs:
             exit 1
           fi
           docker exec "${CONTAINER}" node -e "fetch('http://localhost:8080/collect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'page view',data:{title:'CI'}})}).then(r=>r.json()).then(j=>{console.log(j);process.exit(j.success===true?0:1)}).catch(e=>{console.error(e);process.exit(1)})"
+          # Kauf-Pfad: ohne gesetztes Token (im Image leer) antwortet er 503, nie 200.
+          docker exec "${CONTAINER}" node -e "fetch('http://localhost:8080/purchase',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer x'},body:JSON.stringify({name:'order complete',data:{id:'SO-1'}})}).then(r=>{console.log(r.status);process.exit(r.status===503?0:1)}).catch(e=>{console.error(e);process.exit(1)})"
           # Der Container darf nicht als root laufen.
           test "$(docker exec "${CONTAINER}" id -u)" != "0"
 
