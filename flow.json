@@ -47,7 +47,7 @@
         "requestContext": {
           "code": {
             "type": "requestContext",
-            "push": "$code:(event, context) => { const origin = process.env.MATOMO_ORIGIN; const ingest = (context && context.ingest) || {}; if (ingest.path === '/purchase' || !origin || ingest.origin !== origin) { return false; } return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent } } }; }"
+            "push": "$code:(event, context) => { const origin = process.env.MATOMO_ORIGIN; const ingest = (context && context.ingest) || {}; if (!origin) { return false; } if (ingest.path === '/purchase') { return { event }; } if (event.name === 'order complete' || ingest.origin !== origin) { return false; } return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent } } }; }"
           }
         },
         "meta1Context": {
@@ -147,6 +147,24 @@
               },
               "form": {
                 "submit": { "data": { "map": { "e_c": { "value": "Form" }, "e_a": { "value": "submit" } } } }
+              },
+              "order": {
+                "complete": {
+                  "data": {
+                    "map": {
+                      "idgoal": { "value": 0 },
+                      "url": { "fn": "$code:(event) => (event.source && event.source.url) || process.env.MATOMO_ORIGIN" },
+                      "ec_id": "data.id",
+                      "revenue": "data.value",
+                      "ec_st": { "fn": "$code:(event) => { const d = event.data || {}; return typeof d.value === 'number' ? Math.round((d.value - (d.shipping || 0)) * 100) / 100 : undefined; }" },
+                      "ec_tx": "data.tax",
+                      "ec_sh": "data.shipping",
+                      "ec_items": {
+                        "fn": "$code:(event) => (Array.isArray(event.nested) ? event.nested : []).filter((n) => n && n.entity === 'product').map((n) => [String((n.data || {}).id || ''), String((n.data || {}).name || ''), String((n.data || {}).category || ''), (n.data || {}).price, (n.data || {}).quantity || 1])"
+                      }
+                    }
+                  }
+                }
               },
               "newsletter": {
                 "signup": { "data": { "map": { "e_c": { "value": "Newsletter" }, "e_a": { "value": "signup" } } } }

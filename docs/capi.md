@@ -62,7 +62,8 @@ Das serverseitige `order complete` des Shops (Sylius: `docs/server-event.md` des
   mit einem anderen Event als `order complete` oder ohne Bestell-ID 400.
 - **Kein Origin-Test:** Traefik prüft nur Host, Pfad und Methode (POST) und begrenzt die Anfragen pro IP. Die Zugangskontrolle ist das Token.
 - **Browser-Kauf zählt nicht:** Ein `order complete` über `/collect` (Browser) wird von Meta und Pinterest verworfen, sonst käme der Kauf doppelt an.
-  Für GA4 läuft der Kauf im Browser (kein Server-Ziel), den kann der Stack nicht unterdrücken. Matomo hat kein Mapping für Käufe.
+  Für GA4 läuft der Kauf im Browser (kein Server-Ziel), den kann der Stack nicht unterdrücken.
+- **Matomo:** Auch Matomo bekommt den Kauf nur über diesen Pfad, als Ecommerce-Bestellung (`idgoal=0`, `ec_id`, `revenue`, `ec_st`, `ec_tx`, `ec_sh`, `ec_items`). Die Geräte-Kennung ergibt dieselbe Besucher-ID wie im Browser. Voraussetzung: In Matomo ist Ecommerce für die Site eingeschaltet, der Kauf bleibt sonst ohne Wirkung in den Ecommerce-Berichten. Ein `order complete` aus dem Browser wird auch hier verworfen.
 - **IP, User-Agent, `fbp`, `fbc`, `epik`** kommen auf diesem Pfad aus dem Event (der Shop kennt sie), nicht aus den Headern der Anfrage
   (das wäre der Server des Shops). Der Shop sendet sie nur mit Marketing-Einwilligung und eingeschaltetem Serverweg.
 - **Doppelte Bestellungen:** Eine Bestell-ID wird 30 Tage lang nur einmal angenommen, weitere Sendungen antworten `200` mit `duplicate: true`.
