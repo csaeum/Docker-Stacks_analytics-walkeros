@@ -66,9 +66,7 @@ Das serverseitige `order complete` des Shops (Sylius: `docs/server-event.md` des
 - **Matomo:** Auch Matomo bekommt den Kauf nur über diesen Pfad, als Ecommerce-Bestellung (`idgoal=0`, `ec_id`, `revenue`, `ec_st`, `ec_tx`, `ec_sh`, `ec_items`). Die Geräte-Kennung ergibt dieselbe Besucher-ID wie im Browser. Voraussetzung: In Matomo ist Ecommerce für die Site eingeschaltet, der Kauf bleibt sonst ohne Wirkung in den Ecommerce-Berichten. Ein `order complete` aus dem Browser wird auch hier verworfen.
 - **IP, User-Agent, `fbp`, `fbc`, `epik`** kommen auf diesem Pfad aus dem Event (der Shop kennt sie), nicht aus den Headern der Anfrage
   (das wäre der Server des Shops). Der Shop sendet sie nur mit Marketing-Einwilligung und eingeschaltetem Serverweg.
-- **Doppelte Bestellungen:** Eine Bestell-ID wird 30 Tage lang nur einmal angenommen, weitere Sendungen antworten `200` mit `duplicate: true`.
-  Der Merker liegt im Arbeitsspeicher und ist nach einem Neustart des Containers weg; Meta und Pinterest entfernen Doppelte über `event_id` und `order_id` zusätzlich selbst.
-  Schlägt die Zustellung an Meta oder Pinterest fehl, ist die Bestellung trotzdem als gesehen gemerkt (kein Wiederholen nach Ausfall des Ziels).
+- **Doppelte Bestellungen:** Der Stack merkt sich nichts. Sendet der Shop eine Bestellung erneut (etwa nach einem Fehler), entfernen die Ziele Doppelte selbst: Meta und Pinterest über `event_id` und `order_id`, Matomo über `ec_id`. Schlägt die Zustellung fehl, antwortet der Pfad mit 500 und der Shop kann es wiederholen.
 - **Antwortzeit:** Weil `/purchase` Fehler melden muss, wartet die Quelle bei POST auf die Zustellung (`async: false`). Das gilt auch für `/collect`; `walker.js` wartet nicht auf die Antwort.
 - **Ein Port:** Der Runner hängt nur eine Express-Quelle an Port 8080. Deshalb teilen sich `/collect` und `/purchase` eine Quelle, `purchaseAuth` greift nur bei `/purchase`.
 
