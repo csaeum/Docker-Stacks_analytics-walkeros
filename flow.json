@@ -18,12 +18,16 @@
       "sources": {
         "http": {
           "package": "@walkeros/server-source-express",
+          "before": "purchaseAuth",
           "config": {
+            "async": { "POST": false },
             "settings": {
-              "paths": ["/collect"]
+              "paths": ["/collect", { "path": "/purchase", "methods": ["POST"] }]
             },
             "ingest": {
               "map": {
+                "path": "path",
+                "authorization": "headers.authorization",
                 "ip": "headers.x-real-ip",
                 "userAgent": "headers.user-agent",
                 "origin": "headers.origin",
@@ -34,22 +38,28 @@
         }
       },
       "transformers": {
+        "purchaseAuth": {
+          "code": {
+            "type": "purchaseAuth",
+            "push": "$code:(event, context) => { const ingest = (context && context.ingest) || {}; if (ingest.path !== '/purchase') { return { event }; } const respond = context && context.env && context.env.respond; const deny = (status, error) => { if (respond) { respond({ status, body: { success: false, error } }); } return false; }; const token = process.env.PURCHASE_TOKEN; if (!token) { return deny(503, 'Purchase path disabled'); } const crypto = process.getBuiltinModule('node:crypto'); const given = Buffer.from(String(ingest.authorization || '')); const expected = Buffer.from('Bearer ' + token); if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) { return deny(401, 'Unauthorized'); } if (!event || event.name !== 'order complete') { return deny(400, 'Only order complete is accepted'); } const orderId = event.data && event.data.id; if (typeof orderId !== 'string' || !orderId) { return deny(400, 'Order id missing'); } const seen = (globalThis.wscPurchaseSeen = globalThis.wscPurchaseSeen || new Map()); const now = Date.now(); seen.forEach((t, key) => { if (now - t > 2592000000) { seen.delete(key); } }); if (seen.has(orderId)) { if (respond) { respond({ body: { success: true, duplicate: true } }); } return false; } seen.set(orderId, now); return { event }; }"
+          }
+        },
         "requestContext": {
           "code": {
             "type": "requestContext",
-            "push": "$code:(event, context) => { const origin = process.env.MATOMO_ORIGIN; const ingest = (context && context.ingest) || {}; if (!origin || ingest.origin !== origin) { return false; } return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent } } }; }"
+            "push": "$code:(event, context) => { const origin = process.env.MATOMO_ORIGIN; const ingest = (context && context.ingest) || {}; if (ingest.path === '/purchase' || !origin || ingest.origin !== origin) { return false; } return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent } } }; }"
           }
         },
         "meta1Context": {
           "code": {
             "type": "meta1Context",
-            "push": "$code:(event, context) => { const origins = (process.env.META_1_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean); const ingest = (context && context.ingest) || {}; if (!origins.includes(ingest.origin)) { return false; } const store = (globalThis.wscUserData = globalThis.wscUserData || new Map()); const device = event.user && event.user.device; const now = Date.now(); store.forEach((entry, key) => { if (now - entry.t > 1800000) { store.delete(key); } }); if (event.name === 'user data') { const hash = event.data && event.data.email; if (device && typeof hash === 'string' && /^[a-f0-9]{64}$/.test(hash)) { store.set(device, { t: now, em: hash }); } return false; } const known = device ? store.get(device) : undefined; const found = {}; String(ingest.cookie || '').split(';').forEach((part) => { const pair = part.trim(); const i = pair.indexOf('='); if (i > 0 && pair.slice(0, i) === '_fbp' || pair.slice(0, i) === '_fbc') { found[pair.slice(0, i)] = pair.slice(i + 1); } }); let click; try { click = new URL(event.source && event.source.url).searchParams.get('fbclid') || undefined; } catch (error) { click = undefined; } return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent, fbp: found._fbp, fbc: found._fbc, fbclid: found._fbc ? undefined : click, em: known ? known.em : undefined } } }; }"
+            "push": "$code:(event, context) => { const origins = (process.env.META_1_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean); const ingest = (context && context.ingest) || {}; if (ingest.path === '/purchase') { return { event }; } if (event.name === 'order complete' || !origins.includes(ingest.origin)) { return false; } const store = (globalThis.wscUserData = globalThis.wscUserData || new Map()); const device = event.user && event.user.device; const now = Date.now(); store.forEach((entry, key) => { if (now - entry.t > 1800000) { store.delete(key); } }); if (event.name === 'user data') { const hash = event.data && event.data.email; if (device && typeof hash === 'string' && /^[a-f0-9]{64}$/.test(hash)) { store.set(device, { t: now, em: hash }); } return false; } const known = device ? store.get(device) : undefined; const found = {}; String(ingest.cookie || '').split(';').forEach((part) => { const pair = part.trim(); const i = pair.indexOf('='); if (i > 0 && pair.slice(0, i) === '_fbp' || pair.slice(0, i) === '_fbc') { found[pair.slice(0, i)] = pair.slice(i + 1); } }); let click; try { click = new URL(event.source && event.source.url).searchParams.get('fbclid') || undefined; } catch (error) { click = undefined; } return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent, fbp: found._fbp, fbc: found._fbc, fbclid: found._fbc ? undefined : click, em: known ? known.em : undefined } } }; }"
           }
         },
         "pinterest1Context": {
           "code": {
             "type": "pinterest1Context",
-            "push": "$code:(event, context) => { const origins = (process.env.PINTEREST_1_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean); const ingest = (context && context.ingest) || {}; if (!origins.includes(ingest.origin)) { return false; } const store = (globalThis.wscUserData = globalThis.wscUserData || new Map()); const device = event.user && event.user.device; const now = Date.now(); store.forEach((entry, key) => { if (now - entry.t > 1800000) { store.delete(key); } }); if (event.name === 'user data') { const hash = event.data && event.data.email; if (device && typeof hash === 'string' && /^[a-f0-9]{64}$/.test(hash)) { store.set(device, { t: now, em: hash }); } return false; } const known = device ? store.get(device) : undefined; const found = {}; String(ingest.cookie || '').split(';').forEach((part) => { const pair = part.trim(); const i = pair.indexOf('='); if (i > 0 && pair.slice(0, i) === '_epik') { found[pair.slice(0, i)] = pair.slice(i + 1); } }); let click; try { click = new URL(event.source && event.source.url).searchParams.get('epik') || undefined; } catch (error) { click = undefined; } return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent, epik: found._epik || click, em: known ? [known.em] : undefined } } }; }"
+            "push": "$code:(event, context) => { const origins = (process.env.PINTEREST_1_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean); const ingest = (context && context.ingest) || {}; if (ingest.path === '/purchase') { return { event }; } if (event.name === 'order complete' || !origins.includes(ingest.origin)) { return false; } const store = (globalThis.wscUserData = globalThis.wscUserData || new Map()); const device = event.user && event.user.device; const now = Date.now(); store.forEach((entry, key) => { if (now - entry.t > 1800000) { store.delete(key); } }); if (event.name === 'user data') { const hash = event.data && event.data.email; if (device && typeof hash === 'string' && /^[a-f0-9]{64}$/.test(hash)) { store.set(device, { t: now, em: hash }); } return false; } const known = device ? store.get(device) : undefined; const found = {}; String(ingest.cookie || '').split(';').forEach((part) => { const pair = part.trim(); const i = pair.indexOf('='); if (i > 0 && pair.slice(0, i) === '_epik') { found[pair.slice(0, i)] = pair.slice(i + 1); } }); let click; try { click = new URL(event.source && event.source.url).searchParams.get('epik') || undefined; } catch (error) { click = undefined; } return { event: { ...event, user: { ...event.user, ip: ingest.ip, userAgent: ingest.userAgent, epik: found._epik || click, em: known ? [known.em] : undefined } } }; }"
           }
         }
       },
