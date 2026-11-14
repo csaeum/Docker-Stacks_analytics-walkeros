@@ -192,6 +192,8 @@
               "pixelId": "$env.META_1_PIXEL_ID:",
               "test_event_code": "$env.META_1_TEST_EVENT_CODE:",
             "doNotHash": ["em"],
+              "ip": "event.user.ip",
+              "userAgent": "event.user.userAgent",
               "url": "$env.META_1_URL:https://graph.facebook.com/v22.0/",
               "user_data": {
                 "fbp": "user.fbp",
@@ -415,6 +417,8 @@
               "adAccountId": "$env.PINTEREST_1_AD_ACCOUNT_ID:",
               "test": "$env.PINTEREST_1_TEST:",
             "doNotHash": ["em"],
+              "ip": "event.user.ip",
+              "userAgent": "event.user.userAgent",
               "url": "$env.PINTEREST_1_URL:https://api.pinterest.com/v5/",
               "user_data": {
                 "click_id": "user.epik",
