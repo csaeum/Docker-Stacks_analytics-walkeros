@@ -12,6 +12,7 @@ Traefik. Er ist für Matomo, Meta und Pinterest vorgesehen. GA4 und Google Ads b
 
 - [`Projekt.md`](Projekt.md): Aufbau, Tracking-Ziele, Entscheidungen und Ablösekriterien
 - [`STATUS.md`](STATUS.md): aktueller Stand und nächster Schritt
+- [`docs/inbetriebnahme.md`](docs/inbetriebnahme.md): Checkliste vor dem Produktivbetrieb des Kauf-Pfads
 - [`CICD-Actions.md`](CICD-Actions.md): Pipeline, Scanner und lokale Prüfung
 - [`ReadMe-MCP-nutzen.md`](ReadMe-MCP-nutzen.md): Betrieb, Dev-Instanz und Fehlersuche mit dem MCP
 
